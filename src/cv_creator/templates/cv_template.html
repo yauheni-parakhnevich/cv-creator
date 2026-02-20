@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Executive CV</title>
+    <style>
+        @page {
+            size: A4;
+            margin: 1.5cm 1.8cm;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Georgia', 'Times New Roman', serif;
+            font-size: 10pt;
+            line-height: 1.4;
+            color: #1a1a1a;
+            background: #fff;
+        }
+
+        .cv-container {
+            max-width: 100%;
+        }
+
+        /* Executive Header */
+        h1 {
+            font-family: 'Georgia', serif;
+            font-size: 22pt;
+            font-weight: normal;
+            color: #0d1b2a;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            text-align: center;
+            margin-bottom: 8px;
+            padding-bottom: 12px;
+            border-bottom: 2px solid #0d1b2a;
+        }
+
+        /* Contact Info */
+        .contact, .contact-info {
+            text-align: center;
+            font-family: 'Helvetica Neue', Arial, sans-serif;
+            font-size: 9pt;
+            color: #415a77;
+            margin-bottom: 15px;
+            letter-spacing: 0.5px;
+        }
+
+        .contact a, .contact-info a {
+            color: #415a77;
+            text-decoration: none;
+        }
+
+        /* Section Headers */
+        h2 {
+            font-family: 'Georgia', serif;
+            font-size: 11pt;
+            font-weight: normal;
+            color: #0d1b2a;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-top: 14px;
+            margin-bottom: 8px;
+            padding-bottom: 4px;
+            border-bottom: 1px solid #778da9;
+        }
+
+        /* Profile Section */
+        .profile, .summary {
+            font-style: italic;
+            color: #1b263b;
+            margin-bottom: 12px;
+            text-align: justify;
+            line-height: 1.5;
+        }
+
+        /* Experience Items */
+        .role-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            margin-bottom: 3px;
+        }
+
+        .role-title {
+            font-weight: bold;
+            color: #0d1b2a;
+        }
+
+        .role-date {
+            font-family: 'Helvetica Neue', Arial, sans-serif;
+            font-size: 9pt;
+            color: #415a77;
+        }
+
+        .company {
+            font-style: italic;
+            color: #1b263b;
+            margin-bottom: 4px;
+        }
+
+        /* Strong for titles */
+        strong {
+            font-weight: bold;
+            color: #0d1b2a;
+        }
+
+        /* Lists */
+        ul {
+            margin-left: 18px;
+            margin-top: 4px;
+            margin-bottom: 10px;
+        }
+
+        li {
+            margin-bottom: 3px;
+            line-height: 1.4;
+        }
+
+        li::marker {
+            color: #415a77;
+        }
+
+        /* Paragraphs */
+        p {
+            margin-bottom: 6px;
+            text-align: justify;
+        }
+
+        /* Competencies - inline style */
+        .competencies {
+            line-height: 1.6;
+        }
+
+        /* Sub-headers (h3) */
+        h3 {
+            font-family: 'Helvetica Neue', Arial, sans-serif;
+            font-size: 9pt;
+            font-weight: bold;
+            color: #1b263b;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-top: 8px;
+            margin-bottom: 4px;
+        }
+
+        /* Tables for structured data */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 6px 0;
+        }
+
+        td {
+            padding: 3px 0;
+            vertical-align: top;
+        }
+
+        td:first-child {
+            font-weight: bold;
+            width: 30%;
+            color: #0d1b2a;
+        }
+
+        /* Education entries */
+        .education-entry {
+            margin-bottom: 6px;
+        }
+
+        /* Awards/Leadership */
+        .award {
+            margin-bottom: 4px;
+        }
+
+        /* Horizontal rule alternative */
+        hr {
+            border: none;
+            border-top: 1px solid #778da9;
+            margin: 10px 0;
+        }
+
+        /* Print optimization */
+        @media print {
+            body {
+                font-size: 10pt;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="cv-container">
+        {{CV_CONTENT}}
+    </div>
+</body>
+</html>
