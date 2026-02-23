@@ -37,7 +37,14 @@ from cv_creator.agents import run_cv_optimization
     default=False,
     help="Suppress detailed progress output.",
 )
-def main(vacancy: str, cv: Path, output: Path, quiet: bool) -> None:
+@click.option(
+    "--background",
+    "-b",
+    type=click.Path(exists=True, path_type=Path),
+    default=None,
+    help="Path to file with additional background info extending the CV (projects, details, context).",
+)
+def main(vacancy: str, cv: Path, output: Path, quiet: bool, background: Path | None) -> None:
     """
     CV Creator - Optimize your CV for specific job opportunities.
 
@@ -68,13 +75,18 @@ def main(vacancy: str, cv: Path, output: Path, quiet: bool) -> None:
         click.echo("Error: CV file must be a PDF.", err=True)
         sys.exit(1)
 
-    # Ensure output has .pdf extension
-    if not output.suffix.lower() == ".pdf":
-        output = output.with_suffix(".pdf")
+    # Read background info if provided
+    background_text = None
+    if background:
+        background_text = background.read_text()
+        if verbose:
+            click.echo(f"Read background info from file: {background}")
 
     click.echo("Starting CV optimization...")
     click.echo(f"  CV: {cv}")
     click.echo(f"  Output: {output}")
+    if background:
+        click.echo(f"  Background: {background}")
     click.echo()
 
     try:
@@ -83,6 +95,7 @@ def main(vacancy: str, cv: Path, output: Path, quiet: bool) -> None:
                 vacancy_description=vacancy_description,
                 cv_pdf_path=str(cv),
                 output_path=str(output),
+                background=background_text,
                 verbose=verbose,
             )
         )

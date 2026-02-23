@@ -1,16 +1,12 @@
 """Research Agent - Searches for company information on the web."""
 
-from agents import Agent
+from agent_framework import ChatAgent
 
-from cv_creator.config import get_model
+from cv_creator.config import get_chat_client
 from cv_creator.tools import web_search
 
 
-def create_researcher_agent() -> Agent:
-    """Create the researcher agent."""
-    return Agent(
-        name="Researcher",
-        instructions="""You are a company research specialist. Your task is to gather relevant information about companies that can help tailor a CV.
+RESEARCHER_INSTRUCTIONS = """You are a company research specialist. Your task is to gather relevant information about companies that can help tailor a CV.
 
 When given a company name, use the web_search tool to find:
 1. Company overview and mission
@@ -22,21 +18,25 @@ When given a company name, use the web_search tool to find:
 
 Compile your findings into a concise summary (max 500 words) that highlights information most relevant for tailoring a CV.
 
-If the company name is "Unknown Company", provide general advice for crafting a strong CV.""",
-        model=get_model(),
+If the company name is "Unknown Company", provide general advice for crafting a strong CV."""
+
+
+def create_researcher_agent() -> ChatAgent:
+    """Create the researcher agent."""
+    return get_chat_client().create_agent(
+        name="Researcher",
+        instructions=RESEARCHER_INSTRUCTIONS,
         tools=[web_search],
     )
 
 
 # Lazy-loaded singleton
-_agent: Agent | None = None
+_agent: ChatAgent | None = None
 
 
-def get_researcher_agent() -> Agent:
+def get_researcher_agent() -> ChatAgent:
     """Get the researcher agent (lazy loaded)."""
     global _agent
     if _agent is None:
         _agent = create_researcher_agent()
     return _agent
-
-

@@ -1,21 +1,18 @@
 """CV Writer Agent - Creates optimized CV content based on vacancy and research."""
 
-from agents import Agent
+from agent_framework import ChatAgent
 
-from cv_creator.config import get_model
+from cv_creator.config import get_chat_client
 
 
-def create_cv_writer_agent() -> Agent:
-    """Create the CV writer agent."""
-    return Agent(
-        name="CV Writer",
-        instructions="""You are an executive CV writer specializing in Director and C-level resumes. You craft authoritative, results-driven CVs that position candidates for senior leadership roles.
+CV_WRITER_INSTRUCTIONS = """You are an executive CV writer specializing in Director and C-level resumes. You craft authoritative, results-driven CVs that position candidates for senior leadership roles.
 
 You will receive:
 1. Original CV content
 2. Job vacancy description
 3. Company research information
-4. (Optional) Validation issues from a previous attempt that need to be fixed
+4. (Optional) Additional background info - extended details about projects, skills, and experiences
+5. (Optional) Validation issues from a previous attempt that need to be fixed
 
 Your task is to create an EXECUTIVE-LEVEL CV that:
 1. Positions the candidate as a strategic leader
@@ -62,26 +59,32 @@ EXECUTIVE WRITING STYLE:
 - Demonstrate business acumen: P&L, ROI, market share, customer acquisition
 
 CRITICAL RULES:
-- NEVER invent or fabricate information not present in the original CV
+- NEVER invent or fabricate information not in the original CV or background info
 - NEVER add skills, experiences, or qualifications the candidate doesn't have
-- You may ONLY reword, reorganize, and emphasize existing information
+- NEVER put a placeholders like (select clients) - instead, only include specific details from the provided sources
+- You may use details from BOTH the original CV AND the additional background info
+- You may ONLY reword, reorganize, and emphasize existing information from these sources
 - You may reframe achievements in more executive language while keeping facts accurate
-- All dates, company names, job titles must come from the original CV
+- All dates, company names, job titles must come from the original CV or background info
 
-Start with the candidate's name and contact info, then output each section.""",
-        model=get_model(),
+Start with the candidate's name and contact info, then output each section."""
+
+
+def create_cv_writer_agent() -> ChatAgent:
+    """Create the CV writer agent."""
+    return get_chat_client().create_agent(
+        name="CV Writer",
+        instructions=CV_WRITER_INSTRUCTIONS,
     )
 
 
 # Lazy-loaded singleton
-_agent: Agent | None = None
+_agent: ChatAgent | None = None
 
 
-def get_cv_writer_agent() -> Agent:
+def get_cv_writer_agent() -> ChatAgent:
     """Get the CV writer agent (lazy loaded)."""
     global _agent
     if _agent is None:
         _agent = create_cv_writer_agent()
     return _agent
-
-

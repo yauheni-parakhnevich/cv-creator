@@ -1,22 +1,22 @@
 """PDF generation tool using WeasyPrint."""
 
 from pathlib import Path
+from typing import Annotated
 
 from weasyprint import HTML
-from agents import function_tool
+from agent_framework import ai_function
+from pydantic import Field
 
 
-@function_tool
-def generate_pdf(html_content: str, output_path: str) -> str:
+@ai_function(name="generate_pdf", description="Generate a PDF file from HTML content")
+def generate_pdf(
+    html_content: Annotated[str, Field(description="The HTML content to convert to PDF")],
+    output_path: Annotated[str, Field(description="The file path where the PDF should be saved")],
+) -> str:
     """
     Generate a PDF file from HTML content.
 
-    Args:
-        html_content: The HTML content to convert to PDF.
-        output_path: The file path where the PDF should be saved.
-
-    Returns:
-        A message indicating success and the output path.
+    Returns a message indicating success and the output path.
     """
     path = Path(output_path)
 

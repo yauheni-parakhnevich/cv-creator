@@ -1,5 +1,7 @@
 .env
 venv
+.venv
 cvs
 vacancies
 __pycache__
+uv.*

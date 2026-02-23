@@ -2,16 +2,12 @@
 
 from pathlib import Path
 
-from agents import Agent, Runner
+from agent_framework import ChatAgent
 
-from cv_creator.config import get_model
+from cv_creator.config import get_chat_client
 
 
-def create_summarizer_agent() -> Agent:
-    """Create an agent that summarizes changes between original and optimized CV."""
-    return Agent(
-        name="CV Changes Summarizer",
-        instructions="""You are a CV changes summarizer. Your task is to compare the original CV with the optimized CV and provide a clear, concise summary of the changes made.
+SUMMARIZER_INSTRUCTIONS = """You are a CV changes summarizer. Your task is to compare the original CV with the optimized CV and provide a clear, concise summary of the changes made.
 
 Create a summary that includes:
 
@@ -25,15 +21,21 @@ Format your summary as a readable markdown document with clear sections.
 Be specific about what changed - don't just say "improved wording", explain HOW it was improved.
 Note any content that was emphasized or de-emphasized for this specific role.
 
-Keep the summary concise but informative (around 200-400 words).""",
-        model=get_model(),
+Keep the summary concise but informative (around 200-400 words)."""
+
+
+def create_summarizer_agent() -> ChatAgent:
+    """Create an agent that summarizes changes between original and optimized CV."""
+    return get_chat_client().create_agent(
+        name="CV Changes Summarizer",
+        instructions=SUMMARIZER_INSTRUCTIONS,
     )
 
 
-_agent: Agent | None = None
+_agent: ChatAgent | None = None
 
 
-def get_summarizer_agent() -> Agent:
+def get_summarizer_agent() -> ChatAgent:
     """Get the summarizer agent (lazy loaded)."""
     global _agent
     if _agent is None:
@@ -59,8 +61,7 @@ async def generate_changes_summary(
     summary_path = Path(output_path + ".summary.md")
 
     summarizer = get_summarizer_agent()
-    result = await Runner.run(
-        summarizer,
+    result = await summarizer.run(
         f"""Compare these two CV versions and summarize the changes made to tailor it for the job.
 
 TARGET JOB:
@@ -75,5 +76,5 @@ OPTIMIZED CV:
 Provide a clear summary of what was changed and why.""",
     )
 
-    summary_path.write_text(result.final_output)
+    summary_path.write_text(result.text)
     return str(summary_path)
