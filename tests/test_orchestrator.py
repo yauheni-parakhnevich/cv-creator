@@ -1,6 +1,5 @@
 """Tests for the CV optimization orchestrator."""
 
-from dataclasses import dataclass
 from pathlib import Path
 from unittest.mock import AsyncMock, MagicMock, patch
 
@@ -25,22 +24,50 @@ from cv_creator.agents.orchestrator import (
     ValidationStepResult,
     WorkflowInput,
     build_cv_writer_prompt,
-    finalize_workflow as _finalize_workflow,
-    handle_validation_failed as _handle_validation_failed,
-    handle_validation_retry as _handle_validation_retry,
-    handle_validation_success as _handle_validation_success,
     is_validation_failed,
     is_validation_retry,
     is_validation_success,
+)
+from cv_creator.agents.orchestrator import (
+    finalize_workflow as _finalize_workflow,
+)
+from cv_creator.agents.orchestrator import (
+    handle_validation_failed as _handle_validation_failed,
+)
+from cv_creator.agents.orchestrator import (
+    handle_validation_retry as _handle_validation_retry,
+)
+from cv_creator.agents.orchestrator import (
+    handle_validation_success as _handle_validation_success,
+)
+from cv_creator.agents.orchestrator import (
     merge_branches as _merge_branches,
+)
+from cv_creator.agents.orchestrator import (
     process_company_name as _process_company_name,
+)
+from cv_creator.agents.orchestrator import (
     process_cv_content as _process_cv_content,
+)
+from cv_creator.agents.orchestrator import (
     process_optimized_cv as _process_optimized_cv,
+)
+from cv_creator.agents.orchestrator import (
     process_pdf_generated as _process_pdf_generated,
+)
+from cv_creator.agents.orchestrator import (
     process_research as _process_research,
+)
+from cv_creator.agents.orchestrator import (
     process_validation as _process_validation,
+)
+from cv_creator.agents.orchestrator import (
     start_company_branch as _start_company_branch,
+)
+from cv_creator.agents.orchestrator import (
     start_cv_branch as _start_cv_branch,
+)
+from cv_creator.agents.orchestrator import (
     start_workflow as _start_workflow,
 )
 
@@ -561,7 +588,7 @@ class TestRunCvOptimization:
 
         async def failing_stream(input_data):
             raise ValueError("Something went wrong")
-            yield  # noqa: unreachable — makes this an async generator
+            yield  # noqa: F841 — makes this an async generator
 
         mock_workflow.run_stream = failing_stream
 

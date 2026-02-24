@@ -17,9 +17,10 @@ venv
 .mypy_cache
 .coverage
 
-# IDE
+# IDE / OS
 .idea/
 .vscode/
+.DS_Store
 
 # Project-specific
 cvs
