@@ -13,7 +13,7 @@ class TestPdfReader:
         from cv_creator.tools.pdf_reader import read_pdf
 
         with pytest.raises(FileNotFoundError):
-            read_pdf.fn(file_path="/nonexistent/path/to/file.pdf")
+            read_pdf(file_path="/nonexistent/path/to/file.pdf")
 
     def test_read_pdf_invalid_extension(self, tmp_path: Path):
         """Test that reading a non-PDF file raises ValueError."""
@@ -24,7 +24,7 @@ class TestPdfReader:
         test_file.write_text("test content")
 
         with pytest.raises(ValueError):
-            read_pdf.fn(file_path=str(test_file))
+            read_pdf(file_path=str(test_file))
 
 
 class TestPdfWriter:
@@ -37,7 +37,7 @@ class TestPdfWriter:
         output_path = tmp_path / "output.pdf"
         html_content = "<html><body><h1>Test CV</h1></body></html>"
 
-        result = generate_pdf.fn(html_content=html_content, output_path=str(output_path))
+        result = generate_pdf(html_content=html_content, output_path=str(output_path))
 
         assert output_path.exists()
         assert "successfully generated" in result
@@ -49,6 +49,6 @@ class TestPdfWriter:
         output_path = tmp_path / "subdir" / "nested" / "output.pdf"
         html_content = "<html><body><h1>Test CV</h1></body></html>"
 
-        generate_pdf.fn(html_content=html_content, output_path=str(output_path))
+        generate_pdf(html_content=html_content, output_path=str(output_path))
 
         assert output_path.exists()

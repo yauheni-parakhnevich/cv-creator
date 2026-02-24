@@ -380,8 +380,7 @@ async def handle_validation_failed(
 
     # Add warning about validation issues
     await ctx.add_event(WorkflowEvent(
-        "warning",
-        data=f"CV generated with validation issues after {MAX_VALIDATION_RETRIES} retries: {result.issues}"
+        data=f"WARNING: CV generated with validation issues after {MAX_VALIDATION_RETRIES} retries: {result.issues}"
     ))
 
     # Still generate PDF
