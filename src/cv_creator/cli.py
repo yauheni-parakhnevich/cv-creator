@@ -6,20 +6,20 @@ from pathlib import Path
 
 import click
 
-from cv_creator.agents import run_cv_optimization
+from cv_creator.agents import run_cv_optimization, run_from_content
 
 
 @click.command()
 @click.option(
     "--vacancy",
     "-v",
-    required=True,
+    default=None,
     help="Path to vacancy description file or the vacancy text directly.",
 )
 @click.option(
     "--cv",
     "-c",
-    required=True,
+    default=None,
     type=click.Path(exists=True, path_type=Path),
     help="Path to the original CV PDF file.",
 )
@@ -44,7 +44,20 @@ from cv_creator.agents import run_cv_optimization
     default=None,
     help="Path to file with additional background info extending the CV (projects, details, context).",
 )
-def main(vacancy: str, cv: Path, output: Path, quiet: bool, background: Path | None) -> None:
+@click.option(
+    "--from-content",
+    type=click.Path(exists=True, path_type=Path),
+    default=None,
+    help="Path to a .content file to regenerate PDF and summary from, skipping the optimization workflow.",
+)
+def main(
+    vacancy: str | None,
+    cv: Path | None,
+    output: Path,
+    quiet: bool,
+    background: Path | None,
+    from_content: Path | None,
+) -> None:
     """
     CV Creator - Optimize your CV for specific job opportunities.
 
@@ -56,8 +69,52 @@ def main(vacancy: str, cv: Path, output: Path, quiet: bool, background: Path | N
         cv-creator --vacancy vacancy.txt --cv resume.pdf --output optimized_cv.pdf
 
         cv-creator -v "Software Engineer at Google..." -c resume.pdf -o output.pdf
+
+        cv-creator --from-content optimized_cv.pdf.content -o optimized_cv.pdf
     """
     verbose = not quiet
+
+    if from_content:
+        # Regenerate PDF (and optionally summary) from existing content file
+        vacancy_description = None
+        if vacancy:
+            vacancy_path = Path(vacancy)
+            if vacancy_path.exists() and vacancy_path.is_file():
+                vacancy_description = vacancy_path.read_text()
+            else:
+                vacancy_description = vacancy
+
+        click.echo("Generating PDF from content file...")
+        click.echo(f"  Content: {from_content}")
+        click.echo(f"  Output: {output}")
+        click.echo()
+
+        try:
+            result = asyncio.run(
+                run_from_content(
+                    content_path=str(from_content),
+                    output_path=str(output),
+                    original_cv_path=str(cv) if cv else None,
+                    vacancy_description=vacancy_description,
+                    verbose=verbose,
+                )
+            )
+            click.echo()
+            click.echo(click.style("Success!", fg="green", bold=True))
+            click.echo(f"PDF saved to: {result}")
+        except Exception as e:
+            click.echo()
+            click.echo(click.style(f"Error: {e}", fg="red"), err=True)
+            sys.exit(1)
+        return
+
+    # Full optimization workflow requires --vacancy and --cv
+    if not vacancy:
+        click.echo("Error: --vacancy is required (unless using --from-content).", err=True)
+        sys.exit(1)
+    if not cv:
+        click.echo("Error: --cv is required (unless using --from-content).", err=True)
+        sys.exit(1)
 
     # Determine if vacancy is a file path or direct text
     vacancy_path = Path(vacancy)

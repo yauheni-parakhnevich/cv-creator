@@ -45,6 +45,7 @@ You will receive:
 2. The output file path for the PDF
 
 IMPORTANT: Create an EXECUTIVE-LEVEL layout suitable for Director, VP, or C-suite positions.
+IMPORTANT: Do not do any of text adjustements or optimizations - the content is already optimized. Your task is purely to format it into a polished PDF.
 
 Steps:
 1. Convert the CV content into polished, executive-style HTML

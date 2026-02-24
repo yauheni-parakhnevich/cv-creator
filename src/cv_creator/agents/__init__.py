@@ -7,7 +7,7 @@ from .cv_writer import get_cv_writer_agent
 from .validator import get_validator_agent
 from .pdf_generator import get_pdf_generator_agent
 from .summarizer import get_summarizer_agent, generate_changes_summary
-from .orchestrator import get_orchestrator_agent, run_cv_optimization
+from .orchestrator import get_orchestrator_agent, run_cv_optimization, run_from_content
 
 __all__ = [
     "get_company_extractor_agent",
@@ -20,4 +20,5 @@ __all__ = [
     "generate_changes_summary",
     "get_orchestrator_agent",
     "run_cv_optimization",
+    "run_from_content",
 ]

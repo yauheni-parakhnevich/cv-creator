@@ -286,10 +286,13 @@ async def process_validation(
 async def handle_validation_success(
     result: ValidationStepResult, ctx: WorkflowContext[AgentExecutorRequest]
 ) -> None:
-    """Validation passed - trigger PDF generation."""
+    """Validation passed - save content and trigger PDF generation."""
     _ = result  # Used for type routing
     optimized_cv = await ctx.get_shared_state(STATE_OPTIMIZED_CV)
     output_path = await ctx.get_shared_state(STATE_OUTPUT_PATH)
+
+    # Save finalized CV content before PDF generation
+    Path(output_path + ".content").write_text(optimized_cv)
 
     # Send to PDF generator agent
     await ctx.send_message(
@@ -364,9 +367,12 @@ Please fix these issues while maintaining the quality of the CV.
 async def handle_validation_failed(
     result: ValidationStepResult, ctx: WorkflowContext[AgentExecutorRequest]
 ) -> None:
-    """Validation failed after max retries - generate PDF anyway with warning."""
+    """Validation failed after max retries - save content and generate PDF anyway with warning."""
     optimized_cv = await ctx.get_shared_state(STATE_OPTIMIZED_CV)
     output_path = await ctx.get_shared_state(STATE_OUTPUT_PATH)
+
+    # Save finalized CV content before PDF generation
+    Path(output_path + ".content").write_text(optimized_cv)
 
     # Add warning about validation issues
     await ctx.add_event(WorkflowEvent(
@@ -557,6 +563,81 @@ def create_cv_optimization_workflow(cv_pdf_path: str, output_path: str):
     return workflow
 
 
+async def run_from_content(
+    content_path: str,
+    output_path: str,
+    original_cv_path: str | None = None,
+    vacancy_description: str | None = None,
+    verbose: bool = False,
+) -> str:
+    """
+    Generate PDF and summary from an existing .content file.
+
+    Args:
+        content_path: Path to the .content file with finalized CV text.
+        output_path: Path where the output PDF should be saved.
+        original_cv_path: Optional path to original CV PDF (for summary generation).
+        vacancy_description: Optional vacancy text (for summary generation).
+        verbose: If True, print progress updates.
+
+    Returns:
+        The path to the generated PDF.
+    """
+    initialize()
+
+    def log(message: str) -> None:
+        if verbose:
+            print(f"[CV Creator] {message}")
+
+    cv_content = Path(content_path).read_text()
+    if not cv_content.strip():
+        raise RuntimeError(f"Content file is empty: {content_path}")
+
+    log("Generating PDF from content file...")
+    log(f"  Content: {content_path}")
+    log(f"  Output: {output_path}")
+
+    # PDF generation
+    pdf_agent = get_pdf_generator_agent()
+    await pdf_agent.run(
+        f"""Convert the following CV content into a professional PDF.
+
+CV CONTENT:
+{cv_content}
+
+OUTPUT PATH: {output_path}
+"""
+    )
+    log("  PDF generated.")
+
+    # Summary generation (if original CV and vacancy are available)
+    if original_cv_path and vacancy_description:
+        from cv_creator.tools import read_pdf
+        original_cv = read_pdf(original_cv_path)
+
+        summarizer = get_summarizer_agent()
+        summary_result = await summarizer.run(
+            f"""Compare these two CV versions and summarize the changes made.
+
+TARGET JOB:
+{vacancy_description[:1000]}
+
+ORIGINAL CV:
+{original_cv}
+
+OPTIMIZED CV:
+{cv_content}
+
+Provide a clear summary of what was changed and why."""
+        )
+        summary_path = Path(output_path + ".summary.md")
+        summary_path.write_text(summary_result.text)
+        log(f"  Summary: {summary_path}")
+
+    log("Done.")
+    return output_path
+
+
 async def run_cv_optimization(
     vacancy_description: str,
     cv_pdf_path: str,
@@ -640,6 +721,7 @@ async def run_cv_optimization(
         log("WORKFLOW COMPLETE")
         log("=" * 60)
         log(f"✓ Output: {output_path}")
+        log(f"✓ Content: {output_path}.content")
         log(f"✓ Summary: {output_path}.summary.md")
 
         return output_path
