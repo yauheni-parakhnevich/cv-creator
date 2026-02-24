@@ -1,13 +1,35 @@
 # CV Creator
 
-Multi-agent CLI application to optimize CVs based on job descriptions using Microsoft Agent Framework with Azure OpenAI.
+Multi-agent CLI tool that optimizes CVs for specific job vacancies using Microsoft Agent Framework with Azure OpenAI.
+
+It reads a PDF CV, researches the target company, rewrites the CV with executive-level positioning, validates against hallucinations, and outputs a new PDF.
 
 ## Installation
 
+Requires Python 3.11+.
+
 ```bash
-python -m venv venv
-source venv/bin/activate
+python -m venv .venv
+source .venv/bin/activate
 pip install -e .
+```
+
+For development (adds pytest and ruff):
+
+```bash
+pip install -e ".[dev]"
+```
+
+### System dependencies
+
+WeasyPrint requires system libraries for PDF generation:
+
+```bash
+# macOS
+brew install pango libffi
+
+# Ubuntu/Debian
+sudo apt-get install -y libpango1.0-dev libharfbuzz-dev libffi-dev
 ```
 
 ## Configuration
@@ -19,54 +41,107 @@ cp .env.example .env
 ```
 
 Required environment variables:
-- `AZURE_OPENAI_ENDPOINT` - Azure OpenAI endpoint URL
-- `AZURE_OPENAI_DEPLOYMENT` - Deployment name (e.g., gpt-4o)
-- `TAVILY_API_KEY` - Tavily API key for web search
+- `AZURE_OPENAI_ENDPOINT` — Azure OpenAI endpoint URL
+- `AZURE_OPENAI_DEPLOYMENT` — Deployment name (e.g., `gpt-4o`)
+- `TAVILY_API_KEY` — Tavily API key for web search
 
-Optional environment variables:
-- `AZURE_OPENAI_API_KEY` - Azure OpenAI API key (if not using Azure CLI credential)
-- `AZURE_OPENAI_API_VERSION` - API version (default: 2024-10-21)
+Optional:
+- `AZURE_OPENAI_API_KEY` — Azure OpenAI API key (if not using Azure CLI credential)
+- `AZURE_OPENAI_API_VERSION` — API version (default: `2024-10-21`)
 
 ### Authentication
 
-The application supports two authentication methods:
+Two methods are supported:
 
-1. **Azure CLI credential** (recommended): Run `az login` before using the application
-2. **API Key**: Set `AZURE_OPENAI_API_KEY` in your `.env` file
+1. **Azure CLI credential** (recommended) — run `az login` before using the tool
+2. **API Key** — set `AZURE_OPENAI_API_KEY` in your `.env` file
 
 ## Usage
 
-```bash
-cv-creator --vacancy vacancy.txt --cv resume.pdf --output updated_cv.pdf
-```
-
-Or with verbose output:
+### Full optimization
 
 ```bash
-cv-creator -v "Software Engineer at Google..." -c resume.pdf -o output.pdf
+cv-creator --vacancy vacancy.txt --cv resume.pdf --output optimized_cv.pdf
 ```
 
-Use `--quiet` flag to suppress detailed progress output:
+With additional background info to enrich the CV:
 
 ```bash
-cv-creator --vacancy vacancy.txt --cv resume.pdf --output updated_cv.pdf --quiet
+cv-creator --vacancy vacancy.txt --cv resume.pdf --background background.txt --output optimized_cv.pdf
 ```
 
-## Architecture
+Pass vacancy text directly instead of a file:
 
-The application uses Microsoft Agent Framework with a multi-agent architecture:
+```bash
+cv-creator -v "Software Engineer at Google..." -c resume.pdf -o optimized_cv.pdf
+```
 
-1. **Orchestrator Agent** - Coordinates the workflow using agent-as-tool pattern
-2. **Company Extractor Agent** - Extracts company name from vacancy
-3. **Research Agent** - Searches for company information using Tavily API
-4. **CV Reader Agent** - Extracts text from PDF CV using pdfplumber
-5. **CV Writer Agent** - Creates optimized executive-level CV content
-6. **Validator Agent** - Checks for hallucinations and fabricated information
-7. **PDF Generator Agent** - Creates the final PDF using WeasyPrint
-8. **Summarizer Agent** - Creates a summary of changes made to the CV
+Suppress progress output with `--quiet`:
+
+```bash
+cv-creator --vacancy vacancy.txt --cv resume.pdf --output optimized_cv.pdf --quiet
+```
+
+### Regenerate PDF from content
+
+Each run saves a `.content` file with the raw optimized text. You can regenerate the PDF from it:
+
+```bash
+cv-creator --from-content optimized_cv.pdf.content -o optimized_cv.pdf
+```
 
 ## Output
 
-The application generates:
-- An optimized PDF CV at the specified output path
-- A summary of changes at `<output_path>.summary.md`
+Each run produces three files:
+
+| File | Description |
+|------|-------------|
+| `<output>.pdf` | Optimized CV as PDF |
+| `<output>.pdf.content` | Raw optimized text (can be edited and re-rendered) |
+| `<output>.pdf.summary.md` | Summary of changes made to the CV |
+
+## Architecture
+
+The application uses a **workflow with parallel fan-out/fan-in pattern** built on Microsoft Agent Framework.
+
+```
+                    ┌─ Company Extractor → Researcher ─┐
+Start → Fan-out ──┤                                     ├── Merge → CV Writer → Validator → PDF Generator → Summarizer
+                    └─ CV Reader ──────────────────────┘          ↑                │
+                                                                   └── retry (max 3) ┘
+```
+
+### Agents
+
+| Agent | Role |
+|-------|------|
+| **Company Extractor** | Extracts company name from the vacancy description |
+| **Researcher** | Searches the web for company info using Tavily |
+| **CV Reader** | Extracts text from the PDF CV using pdfplumber |
+| **CV Writer** | Creates optimized executive-level CV content |
+| **Validator** | Checks for hallucinations and fabricated information |
+| **PDF Generator** | Renders the final PDF using WeasyPrint |
+| **Summarizer** | Produces a summary of changes made |
+
+### Key directories
+
+```
+src/cv_creator/
+├── agents/          # One file per agent + orchestrator workflow
+├── tools/           # Reusable tools: web_search, pdf_reader, pdf_writer
+├── config.py        # Azure OpenAI client setup
+└── cli.py           # CLI entry point
+```
+
+## Development
+
+```bash
+# Run tests
+pytest tests/ -v
+
+# Run linter
+ruff check .
+
+# Run tests with coverage
+pytest tests/ --cov=cv_creator --cov-report=term-missing
+```
