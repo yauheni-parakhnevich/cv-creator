@@ -9,8 +9,7 @@ description = "Multi-agent CLI application to optimize CVs based on job descript
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
-    "agent-framework==1.0.0b251120",
-    "agent-framework-core==1.0.0b251001",
+    "agent-framework",
     "azure-identity>=1.15.0",
     "pdfplumber>=0.11.0",
     "weasyprint>=62.0",
