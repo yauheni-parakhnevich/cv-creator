@@ -3,9 +3,9 @@
 import os
 from dataclasses import dataclass
 
-from dotenv import load_dotenv
-from azure.identity import DefaultAzureCredential, AzureCliCredential
 from agent_framework.azure import AzureOpenAIChatClient
+from azure.identity import AzureCliCredential
+from dotenv import load_dotenv
 from tavily import TavilyClient
 
 

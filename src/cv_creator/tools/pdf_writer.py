@@ -3,9 +3,9 @@
 from pathlib import Path
 from typing import Annotated
 
-from weasyprint import HTML
 from agent_framework import ai_function
 from pydantic import Field
+from weasyprint import HTML
 
 
 @ai_function(name="generate_pdf", description="Generate a PDF file from HTML content")

@@ -5,7 +5,6 @@ from agent_framework import ChatAgent
 from cv_creator.config import get_chat_client
 from cv_creator.tools import web_search
 
-
 RESEARCHER_INSTRUCTIONS = """You are a company research specialist. Your task is to gather relevant information about companies that can help tailor a CV.
 
 When given a company name, use the web_search tool to find:

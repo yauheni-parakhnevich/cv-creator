@@ -2,8 +2,8 @@
 
 import json
 
-from pydantic import BaseModel
 from agent_framework import ChatAgent
+from pydantic import BaseModel
 
 from cv_creator.config import get_chat_client
 
@@ -84,6 +84,6 @@ def parse_validation_result(result: str | ValidationResult) -> ValidationResult:
 
         data = json.loads(text)
         return ValidationResult(**data)
-    except (json.JSONDecodeError, TypeError):
+    except (json.JSONDecodeError, TypeError, ValueError):
         # If parsing fails, assume there are issues
         return ValidationResult(valid=False, issues=[f"Failed to parse validation result: {result}"])

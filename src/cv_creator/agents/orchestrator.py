@@ -3,7 +3,7 @@
 from dataclasses import dataclass
 from datetime import date
 from pathlib import Path
-from typing import Any
+from typing import Any, Never
 
 from agent_framework import (
     AgentExecutor,
@@ -16,17 +16,16 @@ from agent_framework import (
     WorkflowEvent,
     executor,
 )
-from typing_extensions import Never
 
 from cv_creator.config import get_chat_client, initialize
+
 from .company_extractor import get_company_extractor_agent
-from .researcher import get_researcher_agent
 from .cv_reader import get_cv_reader_agent
 from .cv_writer import get_cv_writer_agent
-from .validator import get_validator_agent, parse_validation_result
 from .pdf_generator import get_pdf_generator_agent
+from .researcher import get_researcher_agent
 from .summarizer import get_summarizer_agent
-
+from .validator import get_validator_agent, parse_validation_result
 
 MAX_VALIDATION_RETRIES = 3
 
@@ -72,6 +71,49 @@ class ValidationStepResult:
     valid: bool
     issues: list[str]
     retry_count: int
+
+
+# ============================================================================
+# Prompt Builders
+# ============================================================================
+
+def build_cv_writer_prompt(
+    original_cv: str,
+    vacancy: str,
+    company_research: str,
+    background: str = "",
+    validation_issues: str = "",
+) -> str:
+    """Build the prompt for the CV writer agent."""
+    current_date = date.today().strftime("%B %Y")
+
+    prompt = f"""Create an optimized CV based on:
+
+CURRENT DATE: {current_date}
+
+ORIGINAL CV:
+{original_cv}
+
+JOB VACANCY:
+{vacancy}
+
+COMPANY RESEARCH:
+{company_research}
+"""
+    if background:
+        prompt += f"""
+ADDITIONAL BACKGROUND (use this to enrich the CV with more details. Use it as a selectable pool of extended experience. Only include bullets relevant to the target role.):
+{background}
+"""
+    if validation_issues:
+        prompt += f"""
+VALIDATION ISSUES TO FIX:
+{validation_issues}
+
+Please fix these issues while maintaining the quality of the CV.
+"""
+
+    return prompt
 
 
 # ============================================================================
@@ -192,34 +234,14 @@ async def merge_branches(
     company_research = await ctx.get_shared_state(STATE_COMPANY_RESEARCH)
     background = await ctx.get_shared_state(STATE_BACKGROUND) or ""
     validation_issues = await ctx.get_shared_state(STATE_VALIDATION_ISSUES) or ""
-    current_date = date.today().strftime("%B %Y")
 
-    # Build prompt for CV writer
-    prompt = f"""Create an optimized CV based on:
-
-CURRENT DATE: {current_date}
-
-ORIGINAL CV:
-{original_cv}
-
-JOB VACANCY:
-{vacancy}
-
-COMPANY RESEARCH:
-{company_research}
-"""
-    if background:
-        prompt += f"""
-ADDITIONAL BACKGROUND (use this to enrich the CV with more details. Use it as a selectable pool of extended experience. Only include bullets relevant to the target role.):
-{background}
-"""
-    if validation_issues:
-        prompt += f"""
-VALIDATION ISSUES TO FIX:
-{validation_issues}
-
-Please fix these issues while maintaining the quality of the CV.
-"""
+    prompt = build_cv_writer_prompt(
+        original_cv=original_cv,
+        vacancy=vacancy,
+        company_research=company_research,
+        background=background,
+        validation_issues=validation_issues,
+    )
 
     # Send to CV writer agent
     await ctx.send_message(
@@ -318,41 +340,23 @@ async def handle_validation_retry(
     """Validation failed - retry CV writing with issues."""
     # Update retry count and store issues
     new_retry_count = result.retry_count + 1
+    validation_issues = "\n".join(result.issues)
     await ctx.set_shared_state(STATE_VALIDATION_RETRIES, new_retry_count)
-    await ctx.set_shared_state(STATE_VALIDATION_ISSUES, "\n".join(result.issues))
+    await ctx.set_shared_state(STATE_VALIDATION_ISSUES, validation_issues)
 
     # Get data for rewriting
     original_cv = await ctx.get_shared_state(STATE_ORIGINAL_CV)
     vacancy = await ctx.get_shared_state(STATE_VACANCY)
     company_research = await ctx.get_shared_state(STATE_COMPANY_RESEARCH)
     background = await ctx.get_shared_state(STATE_BACKGROUND) or ""
-    current_date = date.today().strftime("%B %Y")
 
-    # Build prompt with validation issues
-    prompt = f"""Create an optimized CV based on:
-
-CURRENT DATE: {current_date}
-
-ORIGINAL CV:
-{original_cv}
-
-JOB VACANCY:
-{vacancy}
-
-COMPANY RESEARCH:
-{company_research}
-"""
-    if background:
-        prompt += f"""
-ADDITIONAL BACKGROUND (use this to enrich the CV with more details):
-{background}
-"""
-    prompt += f"""
-VALIDATION ISSUES TO FIX:
-{"\n".join(result.issues)}
-
-Please fix these issues while maintaining the quality of the CV.
-"""
+    prompt = build_cv_writer_prompt(
+        original_cv=original_cv,
+        vacancy=vacancy,
+        company_research=company_research,
+        background=background,
+        validation_issues=validation_issues,
+    )
 
     # Send back to CV writer agent
     await ctx.send_message(

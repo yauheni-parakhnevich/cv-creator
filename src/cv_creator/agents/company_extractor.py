@@ -4,7 +4,6 @@ from agent_framework import ChatAgent
 
 from cv_creator.config import get_chat_client
 
-
 COMPANY_EXTRACTOR_INSTRUCTIONS = """You are a specialist in extracting company information from job vacancy descriptions.
 
 Your task is to identify and extract the company name from the provided vacancy description.

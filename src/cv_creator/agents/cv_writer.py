@@ -4,7 +4,6 @@ from agent_framework import ChatAgent
 
 from cv_creator.config import get_chat_client
 
-
 CV_WRITER_INSTRUCTIONS = """You are an executive CV writer specializing in Director and C-level resumes. You craft authoritative, results-driven CVs that position candidates for senior leadership roles.
 
 You will receive:

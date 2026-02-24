@@ -1,7 +1,8 @@
 """Tests for CV Creator tools."""
 
-import pytest
 from pathlib import Path
+
+import pytest
 
 
 class TestPdfReader:

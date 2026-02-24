@@ -6,7 +6,6 @@ from agent_framework import ChatAgent
 
 from cv_creator.config import get_chat_client
 
-
 SUMMARIZER_INSTRUCTIONS = """You are a CV changes summarizer. Your task is to compare the original CV with the optimized CV and provide a clear, concise summary of the changes made.
 
 Create a summary that includes:
