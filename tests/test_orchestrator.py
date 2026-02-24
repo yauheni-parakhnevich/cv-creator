@@ -9,6 +9,7 @@ from cv_creator.agents.orchestrator import (
     MAX_VALIDATION_RETRIES,
     STATE_BACKGROUND,
     STATE_COMPANY_NAME,
+    STATE_OUTPUT_FORMAT,
     STATE_COMPANY_RESEARCH,
     STATE_CV_PDF_PATH,
     STATE_CV_READY,
@@ -226,6 +227,7 @@ class TestStartWorkflow:
         assert ctx._state[STATE_CV_PDF_PATH] == "/path/cv.pdf"
         assert ctx._state[STATE_OUTPUT_PATH] == "/path/out.pdf"
         assert ctx._state[STATE_BACKGROUND] == "bg info"
+        assert ctx._state[STATE_OUTPUT_FORMAT] == "pdf"
         assert ctx._state[STATE_VALIDATION_RETRIES] == 0
         assert ctx._state[STATE_VALIDATION_ISSUES] == ""
         assert ctx._state[STATE_RESEARCH_READY] is False
@@ -245,6 +247,18 @@ class TestStartWorkflow:
         )
         await start_workflow(input_data, ctx)
         assert ctx._state[STATE_BACKGROUND] == ""
+
+    @pytest.mark.asyncio
+    async def test_output_format_stored_in_state(self):
+        ctx = make_ctx()
+        input_data = WorkflowInput(
+            vacancy_description="Job",
+            cv_pdf_path="/cv.pdf",
+            output_path="/out.docx",
+            output_format="docx",
+        )
+        await start_workflow(input_data, ctx)
+        assert ctx._state[STATE_OUTPUT_FORMAT] == "docx"
 
 
 class TestStartCompanyBranch:
@@ -495,7 +509,7 @@ class TestRunFromContent:
 
         with (
             patch("cv_creator.agents.orchestrator.initialize"),
-            patch("cv_creator.agents.orchestrator.get_pdf_generator_agent", return_value=mock_pdf_agent),
+            patch("cv_creator.agents.orchestrator.get_document_generator_agent", return_value=mock_pdf_agent),
         ):
             from cv_creator.agents.orchestrator import run_from_content
             result = await run_from_content(str(content_file), output_path)
@@ -519,7 +533,7 @@ class TestRunFromContent:
 
         with (
             patch("cv_creator.agents.orchestrator.initialize"),
-            patch("cv_creator.agents.orchestrator.get_pdf_generator_agent", return_value=mock_pdf_agent),
+            patch("cv_creator.agents.orchestrator.get_document_generator_agent", return_value=mock_pdf_agent),
             patch("cv_creator.agents.orchestrator.get_summarizer_agent", return_value=mock_summarizer),
             patch("cv_creator.tools.read_pdf", return_value="Original CV text"),
         ):

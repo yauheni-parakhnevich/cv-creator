@@ -22,7 +22,7 @@ from cv_creator.config import get_chat_client, initialize
 from .company_extractor import get_company_extractor_agent
 from .cv_reader import get_cv_reader_agent
 from .cv_writer import get_cv_writer_agent
-from .pdf_generator import get_pdf_generator_agent
+from .pdf_generator import get_document_generator_agent, get_pdf_generator_agent
 from .researcher import get_researcher_agent
 from .summarizer import get_summarizer_agent
 from .validator import get_validator_agent, parse_validation_result
@@ -42,6 +42,7 @@ STATE_OUTPUT_PATH = "output_path"
 STATE_RESEARCH_READY = "research_ready"
 STATE_CV_READY = "cv_ready"
 STATE_BACKGROUND = "background"
+STATE_OUTPUT_FORMAT = "output_format"
 
 
 @dataclass
@@ -51,6 +52,7 @@ class WorkflowInput:
     cv_pdf_path: str
     output_path: str
     background: str | None = None
+    output_format: str = "pdf"
 
 
 @dataclass
@@ -130,6 +132,7 @@ async def start_workflow(
     await ctx.set_shared_state(STATE_CV_PDF_PATH, input_data.cv_pdf_path)
     await ctx.set_shared_state(STATE_OUTPUT_PATH, input_data.output_path)
     await ctx.set_shared_state(STATE_BACKGROUND, input_data.background or "")
+    await ctx.set_shared_state(STATE_OUTPUT_FORMAT, input_data.output_format)
     await ctx.set_shared_state(STATE_VALIDATION_RETRIES, 0)
     await ctx.set_shared_state(STATE_VALIDATION_ISSUES, "")
     await ctx.set_shared_state(STATE_RESEARCH_READY, False)
@@ -320,7 +323,7 @@ async def handle_validation_success(
     await ctx.send_message(
         AgentExecutorRequest(
             messages=[ChatMessage(role="user", text=
-                f"""Convert the following CV content into a professional PDF.
+                f"""Convert the following CV content into a professional document.
 
 CV CONTENT:
 {optimized_cv}
@@ -387,7 +390,7 @@ async def handle_validation_failed(
     await ctx.send_message(
         AgentExecutorRequest(
             messages=[ChatMessage(role="user", text=
-                f"""Convert the following CV content into a professional PDF.
+                f"""Convert the following CV content into a professional document.
 
 CV CONTENT:
 {optimized_cv}
@@ -479,7 +482,7 @@ def is_validation_failed(result: Any) -> bool:
 # Workflow Builder
 # ============================================================================
 
-def create_cv_optimization_workflow(cv_pdf_path: str, output_path: str):
+def create_cv_optimization_workflow(cv_pdf_path: str, output_path: str, output_format: str = "pdf"):
     """Create the CV optimization workflow with parallel execution."""
     # Parameters kept for API consistency; paths are passed via WorkflowInput
     _ = cv_pdf_path, output_path
@@ -506,7 +509,7 @@ def create_cv_optimization_workflow(cv_pdf_path: str, output_path: str):
         id="validator_agent",
     )
     pdf_generator = AgentExecutor(
-        get_pdf_generator_agent(),
+        get_document_generator_agent(output_format),
         id="pdf_generator_agent",
     )
     summarizer = AgentExecutor(
@@ -572,19 +575,21 @@ async def run_from_content(
     original_cv_path: str | None = None,
     vacancy_description: str | None = None,
     verbose: bool = False,
+    output_format: str = "pdf",
 ) -> str:
     """
-    Generate PDF and summary from an existing .content file.
+    Generate document and summary from an existing .content file.
 
     Args:
         content_path: Path to the .content file with finalized CV text.
-        output_path: Path where the output PDF should be saved.
+        output_path: Path where the output document should be saved.
         original_cv_path: Optional path to original CV PDF (for summary generation).
         vacancy_description: Optional vacancy text (for summary generation).
         verbose: If True, print progress updates.
+        output_format: Output format, either "pdf" or "docx".
 
     Returns:
-        The path to the generated PDF.
+        The path to the generated document.
     """
     initialize()
 
@@ -596,14 +601,14 @@ async def run_from_content(
     if not cv_content.strip():
         raise RuntimeError(f"Content file is empty: {content_path}")
 
-    log("Generating PDF from content file...")
+    log(f"Generating {output_format.upper()} from content file...")
     log(f"  Content: {content_path}")
     log(f"  Output: {output_path}")
 
-    # PDF generation
-    pdf_agent = get_pdf_generator_agent()
+    # Document generation
+    pdf_agent = get_document_generator_agent(output_format)
     await pdf_agent.run(
-        f"""Convert the following CV content into a professional PDF.
+        f"""Convert the following CV content into a professional document.
 
 CV CONTENT:
 {cv_content}
@@ -611,7 +616,7 @@ CV CONTENT:
 OUTPUT PATH: {output_path}
 """
     )
-    log("  PDF generated.")
+    log(f"  {output_format.upper()} generated.")
 
     # Summary generation (if original CV and vacancy are available)
     if original_cv_path and vacancy_description:
@@ -647,6 +652,7 @@ async def run_cv_optimization(
     output_path: str,
     background: str | None = None,
     verbose: bool = False,
+    output_format: str = "pdf",
 ) -> str:
     """
     Run the complete CV optimization workflow.
@@ -654,12 +660,13 @@ async def run_cv_optimization(
     Args:
         vacancy_description: The job vacancy description text.
         cv_pdf_path: Path to the original CV PDF file.
-        output_path: Path where the optimized CV PDF should be saved.
+        output_path: Path where the optimized CV document should be saved.
         background: Optional additional background info to extend the CV.
         verbose: If True, print progress updates.
+        output_format: Output format, either "pdf" or "docx".
 
     Returns:
-        The path to the generated PDF.
+        The path to the generated document.
     """
     initialize()
 
@@ -672,7 +679,7 @@ async def run_cv_optimization(
         log("CV OPTIMIZATION WORKFLOW")
         log("=" * 60)
         log(f"CV Input: {cv_pdf_path}")
-        log(f"PDF Output: {output_path}")
+        log(f"Output ({output_format.upper()}): {output_path}")
         log(f"Vacancy: {len(vacancy_description)} characters")
         if background:
             log(f"Background: {len(background)} characters")
@@ -686,7 +693,7 @@ async def run_cv_optimization(
         log("")
 
         # Create and run the workflow
-        workflow = create_cv_optimization_workflow(cv_pdf_path, output_path)
+        workflow = create_cv_optimization_workflow(cv_pdf_path, output_path, output_format)
 
         # Create workflow input
         workflow_input = WorkflowInput(
@@ -694,6 +701,7 @@ async def run_cv_optimization(
             cv_pdf_path=cv_pdf_path,
             output_path=output_path,
             background=background,
+            output_format=output_format,
         )
 
         log("Executing workflow...")

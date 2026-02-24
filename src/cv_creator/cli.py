@@ -50,6 +50,14 @@ from cv_creator.agents import run_cv_optimization, run_from_content
     default=None,
     help="Path to a .content file to regenerate PDF and summary from, skipping the optimization workflow.",
 )
+@click.option(
+    "--format",
+    "-f",
+    "output_format",
+    type=click.Choice(["pdf", "docx"], case_sensitive=False),
+    default="pdf",
+    help="Output document format (default: pdf).",
+)
 def main(
     vacancy: str | None,
     cv: Path | None,
@@ -57,6 +65,7 @@ def main(
     quiet: bool,
     background: Path | None,
     from_content: Path | None,
+    output_format: str,
 ) -> None:
     """
     CV Creator - Optimize your CV for specific job opportunities.
@@ -97,6 +106,7 @@ def main(
                     original_cv_path=str(cv) if cv else None,
                     vacancy_description=vacancy_description,
                     verbose=verbose,
+                    output_format=output_format,
                 )
             )
             click.echo()
@@ -154,6 +164,7 @@ def main(
                 output_path=str(output),
                 background=background_text,
                 verbose=verbose,
+                output_format=output_format,
             )
         )
         click.echo()
