@@ -1,11 +1,11 @@
-"""Configuration module for Azure OpenAI and Tavily API setup."""
+"""Configuration module for Microsoft Agent Framework and Tavily API setup."""
 
 import os
 from dataclasses import dataclass
 
+from agent_framework.azure import AzureOpenAIChatClient
+from azure.identity import AzureCliCredential
 from dotenv import load_dotenv
-from openai import AsyncAzureOpenAI
-from agents import set_default_openai_client, set_tracing_disabled, OpenAIChatCompletionsModel
 from tavily import TavilyClient
 
 
@@ -13,11 +13,12 @@ from tavily import TavilyClient
 class Config:
     """Application configuration."""
 
-    azure_openai_api_key: str
     azure_openai_endpoint: str
-    azure_openai_api_version: str
     azure_openai_deployment: str
+    azure_openai_api_version: str
     tavily_api_key: str
+    use_api_key: bool = False
+    azure_openai_api_key: str | None = None
 
 
 def load_config() -> Config:
@@ -25,9 +26,7 @@ def load_config() -> Config:
     load_dotenv()
 
     required_vars = [
-        "AZURE_OPENAI_API_KEY",
         "AZURE_OPENAI_ENDPOINT",
-        "AZURE_OPENAI_API_VERSION",
         "AZURE_OPENAI_DEPLOYMENT",
         "TAVILY_API_KEY",
     ]
@@ -36,19 +35,22 @@ def load_config() -> Config:
     if missing:
         raise ValueError(f"Missing required environment variables: {', '.join(missing)}")
 
+    # Check if API key auth is used (optional)
+    api_key = os.getenv("AZURE_OPENAI_API_KEY")
+
     return Config(
-        azure_openai_api_key=os.getenv("AZURE_OPENAI_API_KEY"),
         azure_openai_endpoint=os.getenv("AZURE_OPENAI_ENDPOINT"),
-        azure_openai_api_version=os.getenv("AZURE_OPENAI_API_VERSION"),
         azure_openai_deployment=os.getenv("AZURE_OPENAI_DEPLOYMENT"),
+        azure_openai_api_version=os.getenv("AZURE_OPENAI_API_VERSION", "2024-10-21"),
         tavily_api_key=os.getenv("TAVILY_API_KEY"),
+        use_api_key=bool(api_key),
+        azure_openai_api_key=api_key,
     )
 
 
 _config: Config | None = None
-_openai_client: AsyncAzureOpenAI | None = None
+_chat_client: AzureOpenAIChatClient | None = None
 _tavily_client: TavilyClient | None = None
-_model: OpenAIChatCompletionsModel | None = None
 
 
 def get_config() -> Config:
@@ -59,17 +61,28 @@ def get_config() -> Config:
     return _config
 
 
-def get_openai_client() -> AsyncAzureOpenAI:
-    """Get the Azure OpenAI client (lazy loaded)."""
-    global _openai_client
-    if _openai_client is None:
+def get_chat_client() -> AzureOpenAIChatClient:
+    """Get the Azure OpenAI Chat client (lazy loaded)."""
+    global _chat_client
+    if _chat_client is None:
         config = get_config()
-        _openai_client = AsyncAzureOpenAI(
-            api_key=config.azure_openai_api_key,
-            api_version=config.azure_openai_api_version,
-            azure_endpoint=config.azure_openai_endpoint,
-        )
-    return _openai_client
+
+        if config.use_api_key:
+            _chat_client = AzureOpenAIChatClient(
+                endpoint=config.azure_openai_endpoint,
+                deployment_name=config.azure_openai_deployment,
+                api_key=config.azure_openai_api_key,
+                api_version=config.azure_openai_api_version,
+            )
+        else:
+            # Use Azure CLI credential for authentication
+            _chat_client = AzureOpenAIChatClient(
+                endpoint=config.azure_openai_endpoint,
+                deployment_name=config.azure_openai_deployment,
+                credential=AzureCliCredential(),
+                api_version=config.azure_openai_api_version,
+            )
+    return _chat_client
 
 
 def get_tavily_client() -> TavilyClient:
@@ -81,22 +94,7 @@ def get_tavily_client() -> TavilyClient:
     return _tavily_client
 
 
-def get_model() -> OpenAIChatCompletionsModel:
-    """Get the OpenAI chat completions model configured for Azure."""
-    global _model
-    if _model is None:
-        config = get_config()
-        client = get_openai_client()
-        _model = OpenAIChatCompletionsModel(
-            model=config.azure_openai_deployment,
-            openai_client=client,
-        )
-    return _model
-
-
 def initialize() -> None:
-    """Initialize the OpenAI Agents SDK with Azure OpenAI client."""
-    # Disable tracing - it only works with OpenAI's platform, not Azure
-    set_tracing_disabled(True)
-    client = get_openai_client()
-    set_default_openai_client(client)
+    """Initialize the application (preload clients)."""
+    get_chat_client()
+    get_tavily_client()

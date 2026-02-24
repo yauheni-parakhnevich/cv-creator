@@ -1,5 +1,28 @@
+# Environment
 .env
+
+# Python
+__pycache__
+*.egg-info
+dist/
+build/
+
+# Virtual environments
 venv
+.venv
+
+# Tools cache
+.pytest_cache
+.ruff_cache
+.mypy_cache
+.coverage
+
+# IDE / OS
+.idea/
+.vscode/
+.DS_Store
+
+# Project-specific
 cvs
 vacancies
-__pycache__
+uv.*

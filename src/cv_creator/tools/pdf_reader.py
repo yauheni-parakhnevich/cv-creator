@@ -1,21 +1,21 @@
 """PDF reading tool using pdfplumber."""
 
 from pathlib import Path
+from typing import Annotated
 
 import pdfplumber
-from agents import function_tool
+from agent_framework import ai_function
+from pydantic import Field
 
 
-@function_tool
-def read_pdf(file_path: str) -> str:
+@ai_function(name="read_pdf", description="Extract text content from a PDF file")
+def read_pdf(
+    file_path: Annotated[str, Field(description="Path to the PDF file to read")],
+) -> str:
     """
     Extract text content from a PDF file.
 
-    Args:
-        file_path: Path to the PDF file to read.
-
-    Returns:
-        The extracted text content from the PDF.
+    Returns the extracted text content from the PDF.
     """
     path = Path(file_path)
 

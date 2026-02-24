@@ -2,9 +2,9 @@
 
 from pathlib import Path
 
-from agents import Agent
+from agent_framework import ChatAgent
 
-from cv_creator.config import get_model
+from cv_creator.config import get_chat_client
 from cv_creator.tools import generate_pdf
 
 
@@ -34,19 +34,18 @@ def get_cv_template() -> str:
 </html>"""
 
 
-def create_pdf_generator_agent() -> Agent:
+def create_pdf_generator_agent() -> ChatAgent:
     """Create the PDF generator agent."""
     template = get_cv_template()
 
-    return Agent(
-        name="PDF Generator",
-        instructions=f"""You are an executive CV formatting specialist. Your task is to convert CV content into an elegant, Director/C-level professional HTML format and generate a PDF.
+    instructions = f"""You are an executive CV formatting specialist. Your task is to convert CV content into an elegant, Director/C-level professional HTML format and generate a PDF.
 
 You will receive:
 1. The finalized CV content
 2. The output file path for the PDF
 
 IMPORTANT: Create an EXECUTIVE-LEVEL layout suitable for Director, VP, or C-suite positions.
+IMPORTANT: Do not do any of text adjustements or optimizations - the content is already optimized. Your task is purely to format it into a polished PDF.
 
 Steps:
 1. Convert the CV content into polished, executive-style HTML
@@ -74,21 +73,22 @@ Steps:
 
 5. Use the generate_pdf tool to create the final PDF
 
-The output should look polished, sophisticated, and appropriate for senior executive roles.""",
-        model=get_model(),
+The output should look polished, sophisticated, and appropriate for senior executive roles."""
+
+    return get_chat_client().create_agent(
+        name="PDF Generator",
+        instructions=instructions,
         tools=[generate_pdf],
     )
 
 
 # Lazy-loaded singleton
-_agent: Agent | None = None
+_agent: ChatAgent | None = None
 
 
-def get_pdf_generator_agent() -> Agent:
+def get_pdf_generator_agent() -> ChatAgent:
     """Get the PDF generator agent (lazy loaded)."""
     global _agent
     if _agent is None:
         _agent = create_pdf_generator_agent()
     return _agent
-
-

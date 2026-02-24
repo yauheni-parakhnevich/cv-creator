@@ -1,21 +1,22 @@
 """Web search tool using Tavily API."""
 
-from agents import function_tool
+from typing import Annotated
+
+from agent_framework import ai_function
+from pydantic import Field
 
 from cv_creator.config import get_tavily_client
 
 
-@function_tool
-def web_search(query: str, max_results: int = 5) -> str:
+@ai_function(name="web_search", description="Search the web for information about a company or topic")
+def web_search(
+    query: Annotated[str, Field(description="The search query string")],
+    max_results: Annotated[int, Field(description="Maximum number of results to return")] = 5,
+) -> str:
     """
     Search the web for information about a company or topic.
 
-    Args:
-        query: The search query string.
-        max_results: Maximum number of results to return (default: 5).
-
-    Returns:
-        A formatted string containing search results with titles, URLs, and content snippets.
+    Returns a formatted string containing search results with titles, URLs, and content snippets.
     """
     client = get_tavily_client()
 
