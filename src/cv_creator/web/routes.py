@@ -1,6 +1,7 @@
 """API routes for CV Creator web app."""
 
 import logging
+import re
 from pathlib import Path
 
 from fastapi import APIRouter, Form, HTTPException, UploadFile
@@ -15,6 +16,24 @@ from cv_creator.web.worker import cleanup_task_files, task_queue
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api")
+
+
+def _sanitize_company(name: str | None) -> str | None:
+    """Return a filesystem-safe version of the company name, or None."""
+    if not name or name.strip().lower() in ("", "unknown company"):
+        return None
+    # Keep only alphanumeric, spaces, hyphens, dots
+    sanitized = re.sub(r"[^\w\s\-.]", "", name.strip())
+    # Collapse whitespace to underscores
+    sanitized = re.sub(r"\s+", "_", sanitized)
+    return sanitized or None
+
+
+def _download_filename(base: str, company: str | None, ext: str) -> str:
+    """Build a download filename like 'optimized_cv_Google.docx'."""
+    if company:
+        return f"{base}_{company}{ext}"
+    return f"{base}{ext}"
 
 
 @router.post("/tasks", response_model=TaskResponse, status_code=201)
@@ -106,9 +125,12 @@ async def download_output(task_id: int):
     media_type = "application/pdf" if task.output_format == "pdf" else (
         "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
     )
+    company = _sanitize_company(task.company_name)
+    ext = Path(task.output_filename).suffix
+    download_name = _download_filename("optimized_cv", company, ext)
     return FileResponse(
         path=output_path,
-        filename=task.output_filename,
+        filename=download_name,
         media_type=media_type,
     )
 
@@ -153,9 +175,12 @@ async def download_cover_letter(task_id: int):
     media_type = "application/pdf" if task.output_format == "pdf" else (
         "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
     )
+    company = _sanitize_company(task.company_name)
+    ext = Path(task.cover_letter_filename).suffix
+    download_name = _download_filename("cover_letter", company, ext)
     return FileResponse(
         path=output_path,
-        filename=task.cover_letter_filename,
+        filename=download_name,
         media_type=media_type,
     )
 
