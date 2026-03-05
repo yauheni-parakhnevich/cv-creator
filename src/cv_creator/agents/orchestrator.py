@@ -12,7 +12,6 @@ from agent_framework import (
     ChatMessage,
     WorkflowBuilder,
     WorkflowContext,
-    WorkflowEvent,
     executor,
 )
 
@@ -22,7 +21,7 @@ from .company_extractor import get_company_extractor_agent
 from .cover_letter_writer import get_cover_letter_writer_agent
 from .cv_reader import get_cv_reader_agent
 from .cv_writer import get_cv_writer_agent
-from .pdf_generator import get_document_generator_agent, get_pdf_generator_agent
+from .pdf_generator import get_document_generator_agent
 from .researcher import get_researcher_agent
 from .summarizer import get_summarizer_agent
 from .validator import get_validator_agent, parse_validation_result

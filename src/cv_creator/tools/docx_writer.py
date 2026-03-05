@@ -10,7 +10,7 @@ from docx.enum.table import WD_TABLE_ALIGNMENT
 from docx.enum.text import WD_ALIGN_PARAGRAPH, WD_TAB_ALIGNMENT
 from docx.oxml import OxmlElement
 from docx.oxml.ns import qn
-from docx.shared import Cm, Emu, Pt, RGBColor
+from docx.shared import Cm, Pt, RGBColor
 from pydantic import Field
 
 # Color constants matching the CSS template
