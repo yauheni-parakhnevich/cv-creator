@@ -9,6 +9,8 @@ from cv_creator.agents.orchestrator import (
     MAX_VALIDATION_RETRIES,
     STATE_BACKGROUND,
     STATE_COMPANY_NAME,
+    STATE_COVER_LETTER_PATH,
+    STATE_OUTPUT_FORMAT,
     STATE_COMPANY_RESEARCH,
     STATE_CV_PDF_PATH,
     STATE_CV_READY,
@@ -21,6 +23,7 @@ from cv_creator.agents.orchestrator import (
     STATE_VALIDATION_RETRIES,
     BranchComplete,
     BranchTrigger,
+    DocumentBranchTrigger,
     ValidationStepResult,
     WorkflowInput,
     build_cv_writer_prompt,
@@ -53,9 +56,6 @@ from cv_creator.agents.orchestrator import (
     process_optimized_cv as _process_optimized_cv,
 )
 from cv_creator.agents.orchestrator import (
-    process_pdf_generated as _process_pdf_generated,
-)
-from cv_creator.agents.orchestrator import (
     process_research as _process_research,
 )
 from cv_creator.agents.orchestrator import (
@@ -85,7 +85,6 @@ process_validation = _process_validation._original_func
 handle_validation_success = _handle_validation_success._original_func
 handle_validation_retry = _handle_validation_retry._original_func
 handle_validation_failed = _handle_validation_failed._original_func
-process_pdf_generated = _process_pdf_generated._original_func
 finalize_workflow = _finalize_workflow._original_func
 
 
@@ -226,6 +225,7 @@ class TestStartWorkflow:
         assert ctx._state[STATE_CV_PDF_PATH] == "/path/cv.pdf"
         assert ctx._state[STATE_OUTPUT_PATH] == "/path/out.pdf"
         assert ctx._state[STATE_BACKGROUND] == "bg info"
+        assert ctx._state[STATE_OUTPUT_FORMAT] == "pdf"
         assert ctx._state[STATE_VALIDATION_RETRIES] == 0
         assert ctx._state[STATE_VALIDATION_ISSUES] == ""
         assert ctx._state[STATE_RESEARCH_READY] is False
@@ -245,6 +245,18 @@ class TestStartWorkflow:
         )
         await start_workflow(input_data, ctx)
         assert ctx._state[STATE_BACKGROUND] == ""
+
+    @pytest.mark.asyncio
+    async def test_output_format_stored_in_state(self):
+        ctx = make_ctx()
+        input_data = WorkflowInput(
+            vacancy_description="Job",
+            cv_pdf_path="/cv.pdf",
+            output_path="/out.docx",
+            output_format="docx",
+        )
+        await start_workflow(input_data, ctx)
+        assert ctx._state[STATE_OUTPUT_FORMAT] == "docx"
 
 
 class TestStartCompanyBranch:
@@ -383,8 +395,8 @@ class TestProcessValidation:
 
 class TestHandleValidationSuccess:
     @pytest.mark.asyncio
-    async def test_writes_content_and_sends_pdf_request(self, tmp_path):
-        output_path = str(tmp_path / "cv.pdf")
+    async def test_writes_content_and_triggers_doc_fanout(self, tmp_path):
+        output_path = str(tmp_path / "optimized_cv.pdf")
         ctx = make_ctx(**{
             STATE_OPTIMIZED_CV: "Final CV content",
             STATE_OUTPUT_PATH: output_path,
@@ -394,9 +406,10 @@ class TestHandleValidationSuccess:
         await handle_validation_success(result, ctx)
 
         assert Path(output_path + ".content").read_text() == "Final CV content"
+        assert STATE_COVER_LETTER_PATH in ctx._state
         ctx.send_message.assert_awaited_once()
         msg = ctx.send_message.call_args[0][0]
-        assert output_path in msg.messages[0].text
+        assert isinstance(msg, DocumentBranchTrigger)
 
 
 class TestHandleValidationRetry:
@@ -421,7 +434,7 @@ class TestHandleValidationRetry:
 
 class TestHandleValidationFailed:
     @pytest.mark.asyncio
-    async def test_writes_content_warns_and_sends_pdf(self, tmp_path):
+    async def test_writes_content_and_yields_output(self, tmp_path):
         output_path = str(tmp_path / "cv.pdf")
         ctx = make_ctx(**{
             STATE_OPTIMIZED_CV: "Imperfect CV",
@@ -436,36 +449,21 @@ class TestHandleValidationFailed:
         await handle_validation_failed(result, ctx)
 
         assert Path(output_path + ".content").read_text() == "Imperfect CV"
-        ctx.add_event.assert_awaited_once()
-        event = ctx.add_event.call_args[0][0]
-        assert "WARNING" in str(event.data)
-        assert "Unresolvable issue" in str(event.data)
-        ctx.send_message.assert_awaited_once()
-
-
-class TestProcessPdfGenerated:
-    @pytest.mark.asyncio
-    async def test_sends_summarization_request(self):
-        ctx = make_ctx(**{
-            STATE_ORIGINAL_CV: "Original CV",
-            STATE_OPTIMIZED_CV: "Optimized CV",
-            STATE_VACANCY: "Job posting here",
-        })
-        response = make_agent_response("PDF generated")
-
-        await process_pdf_generated(response, ctx)
-
-        ctx.send_message.assert_awaited_once()
-        msg = ctx.send_message.call_args[0][0]
-        assert "ORIGINAL CV:" in msg.messages[0].text
-        assert "OPTIMIZED CV:" in msg.messages[0].text
+        ctx.yield_output.assert_awaited_once()
+        output_str = ctx.yield_output.call_args[0][0]
+        assert "FAILED" in output_str
+        assert "Unresolvable issue" in output_str
 
 
 class TestFinalizeWorkflow:
     @pytest.mark.asyncio
     async def test_writes_summary_and_yields_output(self, tmp_path):
         output_path = str(tmp_path / "cv.pdf")
-        ctx = make_ctx(**{STATE_OUTPUT_PATH: output_path})
+        cl_output_path = str(tmp_path / "cover_letter.pdf")
+        ctx = make_ctx(**{
+            STATE_OUTPUT_PATH: output_path,
+            STATE_COVER_LETTER_PATH: cl_output_path,
+        })
         response = make_agent_response("Summary of changes")
 
         await finalize_workflow(response, ctx)
@@ -475,79 +473,11 @@ class TestFinalizeWorkflow:
         ctx.yield_output.assert_awaited_once()
         output_str = ctx.yield_output.call_args[0][0]
         assert output_path in output_str
-        assert str(summary_path) in output_str
 
 
 # ============================================================================
-# 3. Entry-point Functions
+# 3. Entry-point Function
 # ============================================================================
-
-
-class TestRunFromContent:
-    @pytest.mark.asyncio
-    async def test_happy_path_content_only(self, tmp_path):
-        content_file = tmp_path / "cv.pdf.content"
-        content_file.write_text("CV text content")
-        output_path = str(tmp_path / "cv.pdf")
-
-        mock_pdf_agent = AsyncMock()
-        mock_pdf_agent.run = AsyncMock()
-
-        with (
-            patch("cv_creator.agents.orchestrator.initialize"),
-            patch("cv_creator.agents.orchestrator.get_pdf_generator_agent", return_value=mock_pdf_agent),
-        ):
-            from cv_creator.agents.orchestrator import run_from_content
-            result = await run_from_content(str(content_file), output_path)
-
-        assert result == output_path
-        mock_pdf_agent.run.assert_awaited_once()
-        assert "CV text content" in mock_pdf_agent.run.call_args[0][0]
-
-    @pytest.mark.asyncio
-    async def test_with_original_cv_and_vacancy(self, tmp_path):
-        content_file = tmp_path / "cv.pdf.content"
-        content_file.write_text("CV text content")
-        output_path = str(tmp_path / "cv.pdf")
-
-        mock_pdf_agent = AsyncMock()
-        mock_pdf_agent.run = AsyncMock()
-        mock_summarizer = AsyncMock()
-        mock_summary_result = MagicMock()
-        mock_summary_result.text = "Summary text"
-        mock_summarizer.run = AsyncMock(return_value=mock_summary_result)
-
-        with (
-            patch("cv_creator.agents.orchestrator.initialize"),
-            patch("cv_creator.agents.orchestrator.get_pdf_generator_agent", return_value=mock_pdf_agent),
-            patch("cv_creator.agents.orchestrator.get_summarizer_agent", return_value=mock_summarizer),
-            patch("cv_creator.tools.read_pdf", return_value="Original CV text"),
-        ):
-            from cv_creator.agents.orchestrator import run_from_content
-            result = await run_from_content(
-                str(content_file),
-                output_path,
-                original_cv_path="/path/to/original.pdf",
-                vacancy_description="Job posting",
-            )
-
-        assert result == output_path
-        mock_summarizer.run.assert_awaited_once()
-        summary_path = Path(output_path + ".summary.md")
-        assert summary_path.read_text() == "Summary text"
-
-    @pytest.mark.asyncio
-    async def test_empty_content_raises(self, tmp_path):
-        content_file = tmp_path / "cv.pdf.content"
-        content_file.write_text("   ")
-        output_path = str(tmp_path / "cv.pdf")
-
-        with (
-            patch("cv_creator.agents.orchestrator.initialize"),
-            pytest.raises(RuntimeError, match="Content file is empty"),
-        ):
-            from cv_creator.agents.orchestrator import run_from_content
-            await run_from_content(str(content_file), output_path)
 
 
 class TestRunCvOptimization:
@@ -555,7 +485,6 @@ class TestRunCvOptimization:
     async def test_happy_path(self, tmp_path):
         output_path = str(tmp_path / "cv.pdf")
 
-        # Mock the workflow to yield an output event
         mock_workflow = MagicMock()
 
         async def fake_stream(input_data):

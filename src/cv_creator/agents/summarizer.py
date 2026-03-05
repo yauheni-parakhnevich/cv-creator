@@ -20,6 +20,12 @@ Format your summary as a readable markdown document with clear sections.
 Be specific about what changed - don't just say "improved wording", explain HOW it was improved.
 Note any content that was emphasized or de-emphasized for this specific role.
 
+LANGUAGE RULE:
+- Detect the language of the OPTIMIZED CV and write the ENTIRE summary in that same language.
+- If the optimized CV is in German, write the summary in German. If in French, write in French. Etc.
+- Section headings and all text must be in the CV's language.
+- Do NOT translate into English unless the CV is already in English.
+
 Keep the summary concise but informative (around 200-400 words)."""
 
 

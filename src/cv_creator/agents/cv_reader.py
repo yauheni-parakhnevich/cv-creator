@@ -5,9 +5,9 @@ from agent_framework import ChatAgent
 from cv_creator.config import get_chat_client
 from cv_creator.tools import read_pdf
 
-CV_READER_INSTRUCTIONS = """You are a CV parsing specialist. Your task is to extract and structure the content from a PDF CV.
+CV_READER_INSTRUCTIONS = """You are a CV parsing specialist. Your task is to extract and structure the content from a CV file (PDF or Markdown).
 
-When given a PDF file path, use the read_pdf tool to extract the text, then organize it into these sections:
+When given a file path, use the read_cv tool to extract the text, then organize it into these sections:
 1. Personal Information (name, contact details)
 2. Professional Summary/Objective
 3. Work Experience (company, role, dates, responsibilities, achievements)

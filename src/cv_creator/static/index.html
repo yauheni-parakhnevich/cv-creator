@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CV Creator</title>
+    <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
+    <link rel="stylesheet" href="/static/style.css?v=8">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="header-top">
+                <h1 id="app-title">CV Creator</h1>
+                <select id="lang-select" class="lang-select">
+                    <option value="en">EN</option>
+                    <option value="de">DE</option>
+                </select>
+            </div>
+            <div class="profile-bar">
+                <span><span id="profile-label"></span> <strong id="profile-name"></strong></span>
+                <span id="profile-cv-info" class="profile-cv-info"></span>
+                <a href="/" class="btn btn-switch" id="switch-profile-btn"></a>
+            </div>
+        </header>
+
+        <details class="form-section">
+            <summary><h2 id="new-task-title"></h2></summary>
+            <form id="task-form">
+                <div class="card-form">
+                    <div class="card-form-row tall">
+                        <div class="card-form-label" id="label-vacancy"></div>
+                        <div class="card-form-field">
+                            <textarea id="vacancy_text" name="vacancy_text" rows="5" required placeholder=""></textarea>
+                        </div>
+                    </div>
+                    <div class="card-form-row tall">
+                        <div class="card-form-label" id="label-background"></div>
+                        <div class="card-form-field">
+                            <textarea id="background_text" name="background_text" rows="3" placeholder=""></textarea>
+                        </div>
+                    </div>
+                    <div class="card-form-row">
+                        <div class="card-form-label" id="label-cv-override"></div>
+                        <div class="card-form-field-stack">
+                            <input type="file" id="cv_file" name="cv_file" accept=".pdf,.md">
+                            <small id="cv-default-hint" class="form-hint"></small>
+                        </div>
+                    </div>
+                    <div class="card-form-row">
+                        <div class="card-form-label" id="label-output-format"></div>
+                        <div class="card-form-field">
+                            <select id="output_format" name="output_format">
+                                <option value="docx">DOCX</option>
+                                <option value="pdf">PDF</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="card-form-row">
+                        <div class="card-form-label" id="label-cv-style"></div>
+                        <div class="card-form-field">
+                            <select id="cv_style" name="cv_style">
+                                <option value="executive" id="app-opt-executive"></option>
+                                <option value="normal" id="app-opt-normal"></option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-form-actions">
+                    <button type="submit" id="submit-btn" class="btn-primary"></button>
+                </div>
+            </form>
+        </details>
+
+        <section class="tasks-section">
+            <h2 id="tasks-title"></h2>
+            <div id="tasks-empty" class="empty-state"></div>
+            <div id="tasks-list" class="tasks-grid hidden"></div>
+            <div id="tasks-pager" class="pager hidden"></div>
+        </section>
+    </div>
+
+    <script src="/static/i18n.js?v=8"></script>
+    <script src="/static/app.js?v=8"></script>
+</body>
+</html>

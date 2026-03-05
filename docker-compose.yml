@@ -1,0 +1,13 @@
+services:
+  cv-creator-web:
+    build: .
+    ports:
+      - "8000:8000"
+    volumes:
+      - cv-data:/data
+    env_file:
+      - .env
+    restart: unless-stopped
+
+volumes:
+  cv-data:

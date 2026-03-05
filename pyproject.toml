@@ -4,8 +4,8 @@ build-backend = "hatchling.build"
 
 [project]
 name = "cv-creator"
-version = "0.2.0"
-description = "Multi-agent CLI application to optimize CVs based on job descriptions"
+version = "0.3.0"
+description = "Multi-agent web application to optimize CVs based on job descriptions"
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
@@ -15,19 +15,26 @@ dependencies = [
     "weasyprint>=62.0",
     "python-dotenv>=1.0.0",
     "tavily-python>=0.5.0",
-    "click>=8.1.0",
+    "python-docx>=1.0.0",
+    "beautifulsoup4>=4.12.0",
     "pydantic>=2.0.0",
+    "fastapi>=0.115.0",
+    "uvicorn[standard]>=0.32.0",
+    "sqlalchemy>=2.0.0",
+    "aiosqlite>=0.20.0",
+    "python-multipart>=0.0.12",
 ]
 
 [project.optional-dependencies]
 dev = [
     "pytest>=8.0.0",
     "pytest-asyncio>=0.24.0",
+    "httpx>=0.27.0",
     "ruff>=0.8.0",
 ]
 
 [project.scripts]
-cv-creator = "cv_creator.cli:main"
+cv-creator = "cv_creator.web.run:main"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/cv_creator"]
