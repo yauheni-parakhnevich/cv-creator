@@ -37,12 +37,16 @@ async def lifespan(app: FastAPI):
 
 def create_app(use_lifespan: bool = True) -> FastAPI:
     """Create and configure the FastAPI application."""
-    app = FastAPI(title="CV Creator", version="0.2.0", lifespan=lifespan if use_lifespan else None)
+    app = FastAPI(title="CV Creator", version="0.3.0", lifespan=lifespan if use_lifespan else None)
     app.include_router(router)
     app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
 
     @app.get("/")
     async def index():
+        return FileResponse(STATIC_DIR / "login.html")
+
+    @app.get("/app")
+    async def main_app():
         return FileResponse(STATIC_DIR / "index.html")
 
     @app.get("/tasks/{task_id}")

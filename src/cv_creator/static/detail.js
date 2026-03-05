@@ -1,3 +1,22 @@
+initLangSelector();
+
+// Apply translations to static elements
+document.getElementById("back-link").innerHTML = `&larr; ${t("backToTasks")}`;
+document.getElementById("task-title-label").textContent = t("taskTitle");
+document.getElementById("detail-label-company").textContent = t("labelCompany");
+document.getElementById("detail-label-cv-file").textContent = t("labelCvFileDetail");
+document.getElementById("detail-label-format").textContent = t("labelOutputFormatDetail");
+document.getElementById("detail-label-style").textContent = t("labelCvStyleDetail");
+document.getElementById("detail-label-created").textContent = t("labelCreated");
+document.getElementById("detail-label-updated").textContent = t("labelUpdated");
+document.getElementById("detail-label-vacancy").textContent = t("labelVacancyDesc");
+document.getElementById("detail-label-background").textContent = t("labelBackgroundInfo");
+document.getElementById("detail-label-summary").textContent = t("labelChangesSummary");
+document.getElementById("detail-label-error").textContent = t("labelError");
+document.getElementById("download-btn").textContent = t("downloadCv");
+document.getElementById("download-cover-letter-btn").textContent = t("downloadCoverLetter");
+document.getElementById("delete-btn").textContent = t("deleteTask");
+
 const taskId = window.location.pathname.split("/").pop();
 let pollTimer = null;
 
@@ -8,7 +27,13 @@ function statusBadge(status) {
     completed: "badge-completed",
     failed: "badge-failed",
   }[status] || "";
-  return { cls, label: status };
+  const labelMap = {
+    pending: t("statusPending"),
+    processing: t("statusProcessing"),
+    completed: t("statusCompleted"),
+    failed: t("statusFailed"),
+  };
+  return { cls, label: labelMap[status] || status };
 }
 
 function formatDate(iso) {
@@ -81,7 +106,6 @@ function render(task) {
 }
 
 function renderMarkdown(text) {
-  // Simple markdown to HTML: headings, bold, italic, lists, paragraphs
   return text
     .replace(/^### (.+)$/gm, "<h4>$1</h4>")
     .replace(/^## (.+)$/gm, "<h3>$1</h3>")
@@ -120,7 +144,7 @@ async function loadTask() {
     const res = await fetch(`/api/tasks/${taskId}`);
     if (!res.ok) {
       document.getElementById("task-detail").innerHTML =
-        '<p class="empty-state">Task not found.</p>';
+        `<p class="empty-state">${t("taskNotFound")}</p>`;
       if (pollTimer) clearInterval(pollTimer);
       return;
     }
@@ -131,16 +155,16 @@ async function loadTask() {
 }
 
 document.getElementById("delete-btn").addEventListener("click", async () => {
-  if (!confirm("Delete this task?")) return;
+  if (!confirm(t("confirmDeleteTask"))) return;
   try {
     const res = await fetch(`/api/tasks/${taskId}`, { method: "DELETE" });
     if (res.ok || res.status === 204) {
-      window.location.href = "/";
+      window.location.href = "/app";
     } else {
-      alert("Failed to delete task");
+      alert(t("failedDeleteTaskDetail"));
     }
   } catch {
-    alert("Failed to delete task");
+    alert(t("failedDeleteTaskDetail"));
   }
 });
 

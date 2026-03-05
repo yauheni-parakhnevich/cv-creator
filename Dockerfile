@@ -12,10 +12,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 WORKDIR /app
 
-COPY pyproject.toml README.md ./
+COPY constraints.txt pyproject.toml README.md ./
 COPY src/ src/
 
-RUN pip install --no-cache-dir -e .
+RUN PIP_CONSTRAINT=constraints.txt pip install --no-cache-dir -e .
 
 ENV CV_CREATOR_DATA_DIR=/data
 

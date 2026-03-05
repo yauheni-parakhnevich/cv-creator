@@ -22,6 +22,14 @@ header {
   margin-bottom: 2rem;
 }
 
+.header-top {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  position: relative;
+}
+
 header h1 {
   font-size: 1.8rem;
   color: #1a1a2e;
@@ -32,13 +40,46 @@ header p {
   margin-top: 0.25rem;
 }
 
+.lang-select {
+  position: absolute;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  padding: 0.2rem 0.3rem;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 0.8rem;
+  font-family: inherit;
+  color: #666;
+  background: #fff;
+  cursor: pointer;
+  appearance: none;
+  -webkit-appearance: none;
+  text-align: center;
+  min-width: 3rem;
+}
+
+.lang-select:hover {
+  border-color: #aaa;
+  color: #333;
+}
+
 h2 {
   font-size: 1.2rem;
   margin-bottom: 1rem;
   color: #1a1a2e;
 }
 
-.form-section, .tasks-section {
+.tasks-section {
+  background: #fff;
+  border-radius: 8px;
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+/* Card-style form section */
+.form-section {
   background: #fff;
   border-radius: 8px;
   padding: 1.5rem;
@@ -77,6 +118,148 @@ details.form-section form {
   margin-top: 1rem;
 }
 
+/* Card-style form fields */
+.card-form {
+  border: 1px solid #e8e8e8;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.card-form-row {
+  display: flex;
+  align-items: stretch;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.card-form-row:last-child {
+  border-bottom: none;
+}
+
+.card-form-row.tall {
+  flex-direction: column;
+}
+
+.card-form-label {
+  display: flex;
+  align-items: center;
+  width: 160px;
+  min-width: 160px;
+  padding: 0.6rem 0.85rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #666;
+  text-transform: uppercase;
+  background: #fafafa;
+  border-right: 1px solid #f0f0f0;
+}
+
+.card-form-row.tall .card-form-label {
+  width: 100%;
+  border-right: none;
+  border-bottom: 1px solid #f0f0f0;
+  padding: 0.5rem 0.85rem;
+}
+
+.card-form-field {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  padding: 0.4rem 0.75rem;
+  min-width: 0;
+}
+
+.card-form-row.tall .card-form-field {
+  padding: 0;
+}
+
+.card-form-field input[type="text"],
+.card-form-field select {
+  width: 100%;
+  border: none;
+  outline: none;
+  font-size: 0.9rem;
+  font-family: inherit;
+  background: transparent;
+  padding: 0.2rem 0;
+}
+
+.card-form-field input[type="file"] {
+  width: 100%;
+  font-size: 0.85rem;
+  font-family: inherit;
+}
+
+.card-form-field textarea {
+  width: 100%;
+  border: none;
+  outline: none;
+  font-size: 0.9rem;
+  font-family: inherit;
+  resize: vertical;
+  padding: 0.6rem 0.75rem;
+  min-height: 60px;
+}
+
+.card-form-field .form-hint {
+  display: block;
+  font-size: 0.75rem;
+  color: #999;
+  margin-top: 0.15rem;
+}
+
+.card-form-field-stack {
+  flex: 1;
+  padding: 0.4rem 0.75rem;
+}
+
+.card-form-field-stack input[type="file"] {
+  width: 100%;
+  font-size: 0.85rem;
+  font-family: inherit;
+}
+
+.card-form-actions {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.85rem;
+}
+
+.card-form-actions button,
+.card-form-actions .btn {
+  padding: 0.5rem 1.2rem;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  font-family: inherit;
+  cursor: pointer;
+  border: none;
+}
+
+.card-form-actions .btn-primary {
+  background: #1a1a2e;
+  color: #fff;
+}
+
+.card-form-actions .btn-primary:hover {
+  background: #16213e;
+}
+
+.card-form-actions .btn-primary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.card-form-actions .btn-secondary {
+  background: none;
+  border: 1px solid #ddd;
+  color: #666;
+}
+
+.card-form-actions .btn-secondary:hover {
+  background: #f5f5f5;
+  border-color: #ccc;
+}
+
+/* Legacy form-group (for compatibility) */
 .form-group {
   margin-bottom: 1rem;
 }
@@ -122,6 +305,175 @@ button[type="submit"]:disabled {
   cursor: not-allowed;
 }
 
+/* Task cards */
+.tasks-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.task-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.65rem 1rem;
+  border: 1px solid #e8e8e8;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s, box-shadow 0.15s;
+}
+
+.task-card:hover {
+  background: #f0f4ff;
+  border-color: #c7d2fe;
+  box-shadow: 0 2px 8px rgba(79, 70, 229, 0.08);
+}
+
+.task-card-body {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  min-width: 0;
+  flex: 1;
+}
+
+.task-card-main {
+  min-width: 0;
+}
+
+.task-card-title {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #1a1a2e;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.task-card-meta {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.2rem;
+  font-size: 0.8rem;
+  color: #888;
+}
+
+.task-card-format {
+  color: #666;
+  font-weight: 500;
+}
+
+.task-card-date {
+  color: #aaa;
+}
+
+.task-card-error {
+  font-size: 0.75rem;
+  color: #721c24;
+  margin-top: 0.15rem;
+  max-width: 400px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.task-card-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  flex-shrink: 0;
+}
+
+.btn-sm {
+  padding: 0.2rem 0.5rem;
+  font-size: 0.75rem;
+}
+
+/* Task action icon buttons */
+.task-action-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0.25rem 0.4rem;
+  border-radius: 4px;
+  line-height: 1;
+  text-decoration: none;
+  color: #ccc;
+  transition: color 0.15s, background 0.15s;
+}
+
+.task-action-download {
+  font-size: 1.1rem;
+}
+
+.task-action-download:hover {
+  color: #059669;
+  background: #d1fae5;
+}
+
+.task-action-letter {
+  font-size: 1.1rem;
+}
+
+.task-action-letter:hover {
+  color: #2563eb;
+  background: #dbeafe;
+}
+
+.task-action-delete {
+  font-size: 1.3rem;
+}
+
+.task-action-delete:hover {
+  color: #dc2626;
+  background: #fee2e2;
+}
+
+/* Pagination */
+.pager {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.25rem;
+  margin-top: 1rem;
+}
+
+.pager-btn {
+  background: none;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  padding: 0.3rem 0.6rem;
+  font-size: 0.85rem;
+  cursor: pointer;
+  color: #333;
+  font-family: inherit;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.pager-btn:hover:not(:disabled):not(.pager-active) {
+  background: #f0f4ff;
+  border-color: #c7d2fe;
+}
+
+.pager-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.pager-active {
+  background: #1a1a2e;
+  color: #fff;
+  border-color: #1a1a2e;
+}
+
+.pager-ellipsis {
+  padding: 0.3rem 0.3rem;
+  color: #999;
+  font-size: 0.85rem;
+}
+
+/* Legacy table (detail page) */
 table {
   width: 100%;
   border-collapse: collapse;
@@ -345,4 +697,202 @@ th {
 .detail-actions .btn {
   padding: 0.5rem 1rem;
   font-size: 0.9rem;
+}
+
+/* Profile bar */
+.profile-bar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  margin-top: 0.5rem;
+  font-size: 0.9rem;
+  color: #666;
+}
+
+.profile-cv-info {
+  color: #999;
+  font-size: 0.85rem;
+}
+
+.btn-switch {
+  background: #6c757d;
+  color: #fff;
+  padding: 0.2rem 0.6rem;
+  font-size: 0.8rem;
+}
+
+.btn-switch:hover {
+  background: #5a6268;
+}
+
+/* Login page */
+.login-container {
+  max-width: 600px;
+}
+
+.profiles-section {
+  background: #fff;
+  border-radius: 10px;
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.profiles-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.profile-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.75rem 1rem;
+  border: 1px solid #e8e8e8;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s, box-shadow 0.15s;
+}
+
+.profile-card:hover {
+  background: #f0f4ff;
+  border-color: #c7d2fe;
+  box-shadow: 0 2px 8px rgba(79, 70, 229, 0.08);
+}
+
+.profile-card-body {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  min-width: 0;
+}
+
+.profile-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-weight: 700;
+  font-size: 0.85rem;
+  flex-shrink: 0;
+  letter-spacing: 0.5px;
+}
+
+.profile-info {
+  min-width: 0;
+}
+
+.profile-name {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #1a1a2e;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.profile-meta {
+  font-size: 0.8rem;
+  color: #888;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.profile-card-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.15rem;
+  flex-shrink: 0;
+}
+
+.profile-edit-btn,
+.profile-delete-btn {
+  background: none;
+  border: none;
+  color: #ccc;
+  cursor: pointer;
+  padding: 0.25rem 0.4rem;
+  border-radius: 4px;
+  line-height: 1;
+  transition: color 0.15s, background 0.15s;
+}
+
+.profile-edit-btn {
+  font-size: 1rem;
+}
+
+.profile-delete-btn {
+  font-size: 1.3rem;
+}
+
+.profile-edit-btn:hover {
+  color: #4f46e5;
+  background: #eef2ff;
+}
+
+.profile-delete-btn:hover {
+  color: #dc2626;
+  background: #fee2e2;
+}
+
+/* New profile form area */
+.new-profile-area {
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid #eee;
+}
+
+.btn-new-profile {
+  width: 100%;
+  padding: 0.6rem;
+  background: none;
+  border: 2px dashed #d0d0d0;
+  border-radius: 8px;
+  color: #888;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: border-color 0.15s, color 0.15s, background 0.15s;
+}
+
+.btn-new-profile:hover {
+  border-color: #1a1a2e;
+  color: #1a1a2e;
+  background: #fafafa;
+}
+
+.new-profile-form {
+  animation: slideDown 0.2s ease-out;
+}
+
+.new-profile-form h3 {
+  font-size: 1rem;
+  color: #1a1a2e;
+  margin-bottom: 0.75rem;
+}
+
+@keyframes slideDown {
+  from { opacity: 0; transform: translateY(-8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.form-hint {
+  display: block;
+  margin-top: 0.3rem;
+  font-size: 0.8rem;
+  color: #888;
+}
+
+.form-group input[type="text"] {
+  width: 100%;
+  padding: 0.5rem;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 0.95rem;
+  font-family: inherit;
 }

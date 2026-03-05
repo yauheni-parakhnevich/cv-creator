@@ -1,13 +1,18 @@
 """Async SQLAlchemy database setup for CV Creator web app."""
 
+import logging
 import os
 from pathlib import Path
 
+from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
+
+logger = logging.getLogger(__name__)
 
 DATA_DIR = Path(os.environ.get("CV_CREATOR_DATA_DIR", "./data"))
 UPLOADS_DIR = DATA_DIR / "uploads"
 OUTPUTS_DIR = DATA_DIR / "outputs"
+PROFILES_DIR = DATA_DIR / "profiles"
 
 _engine = None
 _async_session = None
@@ -42,6 +47,18 @@ async def init_db():
     DATA_DIR.mkdir(parents=True, exist_ok=True)
     UPLOADS_DIR.mkdir(parents=True, exist_ok=True)
     OUTPUTS_DIR.mkdir(parents=True, exist_ok=True)
+    PROFILES_DIR.mkdir(parents=True, exist_ok=True)
 
     async with get_engine().begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
+
+    # Migrate: add profile_id column to tasks if missing (pre-profiles schema)
+    async with get_engine().begin() as conn:
+        try:
+            result = await conn.execute(text("PRAGMA table_info(tasks)"))
+            columns = {row[1] for row in result}
+            if "profile_id" not in columns:
+                await conn.execute(text("ALTER TABLE tasks ADD COLUMN profile_id INTEGER REFERENCES profiles(id)"))
+                logger.info("Migrated tasks table: added profile_id column")
+        except Exception:
+            logger.debug("Migration check skipped (table may not exist yet)")

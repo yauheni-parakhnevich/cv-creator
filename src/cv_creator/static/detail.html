@@ -3,77 +3,85 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Task Detail - CV Creator</title>
-    <link rel="stylesheet" href="/static/style.css">
+    <title>CV Creator</title>
+    <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
+    <link rel="stylesheet" href="/static/style.css?v=8">
 </head>
 <body>
     <div class="container">
         <header>
-            <h1>CV Creator</h1>
-            <a href="/" class="back-link">&larr; Back to tasks</a>
+            <div class="header-top">
+                <h1 id="app-title">CV Creator</h1>
+                <select id="lang-select" class="lang-select">
+                    <option value="en">EN</option>
+                    <option value="de">DE</option>
+                </select>
+            </div>
+            <a href="/app" class="back-link" id="back-link"></a>
         </header>
 
         <section class="detail-section" id="task-detail">
             <div class="detail-header">
-                <h2>Task #<span id="task-id"></span></h2>
+                <h2><span id="task-title-label"></span><span id="task-id"></span></h2>
                 <span id="task-status" class="badge"></span>
             </div>
 
             <div class="detail-grid">
                 <div class="detail-item">
-                    <label>Company</label>
+                    <label id="detail-label-company"></label>
                     <span id="task-company"></span>
                 </div>
                 <div class="detail-item">
-                    <label>CV File</label>
+                    <label id="detail-label-cv-file"></label>
                     <span id="task-cv-filename"></span>
                 </div>
                 <div class="detail-item">
-                    <label>Output Format</label>
+                    <label id="detail-label-format"></label>
                     <span id="task-format"></span>
                 </div>
                 <div class="detail-item">
-                    <label>CV Style</label>
+                    <label id="detail-label-style"></label>
                     <span id="task-style"></span>
                 </div>
                 <div class="detail-item">
-                    <label>Created</label>
+                    <label id="detail-label-created"></label>
                     <span id="task-created"></span>
                 </div>
                 <div class="detail-item">
-                    <label>Updated</label>
+                    <label id="detail-label-updated"></label>
                     <span id="task-updated"></span>
                 </div>
             </div>
 
             <div class="detail-block">
-                <label>Vacancy Description</label>
+                <label id="detail-label-vacancy"></label>
                 <pre id="task-vacancy"></pre>
             </div>
 
             <div class="detail-block" id="background-block" style="display:none">
-                <label>Background Info</label>
+                <label id="detail-label-background"></label>
                 <pre id="task-background"></pre>
             </div>
 
             <div class="detail-block" id="summary-block" style="display:none">
-                <label>Changes Summary</label>
+                <label id="detail-label-summary"></label>
                 <div id="task-summary" class="summary-content"></div>
             </div>
 
             <div class="detail-block" id="error-block" style="display:none">
-                <label>Error</label>
+                <label id="detail-label-error"></label>
                 <pre id="task-error" class="error-text"></pre>
             </div>
 
             <div class="detail-actions">
-                <a id="download-btn" href="#" class="btn btn-download" style="display:none">Download CV</a>
-                <a id="download-cover-letter-btn" href="#" class="btn btn-download" style="display:none">Download Cover Letter</a>
-                <button id="delete-btn" class="btn btn-delete">Delete Task</button>
+                <a id="download-btn" href="#" class="btn btn-download" style="display:none"></a>
+                <a id="download-cover-letter-btn" href="#" class="btn btn-download" style="display:none"></a>
+                <button id="delete-btn" class="btn btn-delete"></button>
             </div>
         </section>
     </div>
 
-    <script src="/static/detail.js"></script>
+    <script src="/static/i18n.js?v=8"></script>
+    <script src="/static/detail.js?v=8"></script>
 </body>
 </html>

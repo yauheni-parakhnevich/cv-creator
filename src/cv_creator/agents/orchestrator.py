@@ -9,7 +9,6 @@ from agent_framework import (
     AgentExecutor,
     AgentExecutorRequest,
     AgentExecutorResponse,
-    ChatAgent,
     ChatMessage,
     WorkflowBuilder,
     WorkflowContext,
@@ -17,7 +16,7 @@ from agent_framework import (
     executor,
 )
 
-from cv_creator.config import get_chat_client, initialize
+from cv_creator.config import initialize
 
 from .company_extractor import get_company_extractor_agent
 from .cover_letter_writer import get_cover_letter_writer_agent
@@ -390,15 +389,14 @@ async def handle_validation_failed(
     optimized_cv = await ctx.get_shared_state(STATE_OPTIMIZED_CV)
     output_path = await ctx.get_shared_state(STATE_OUTPUT_PATH)
 
-    # Save whatever we have so the user can regenerate later with --from-content
+    # Save whatever we have so the user can inspect the content
     Path(output_path + ".content").write_text(optimized_cv)
 
     issues = "\n".join(result.issues)
     await ctx.yield_output(
         f"CV optimization FAILED after {MAX_VALIDATION_RETRIES} validation retries.\n"
         f"Validation issues:\n{issues}\n\n"
-        f"Content saved to: {output_path}.content\n"
-        f"You can retry document generation with: cv-creator --from-content {output_path}.content -o {output_path}"
+        f"Content saved to: {output_path}.content"
     )
 
 
@@ -699,130 +697,6 @@ def create_cv_optimization_workflow(cv_pdf_path: str, output_path: str, output_f
     return workflow
 
 
-async def run_from_content(
-    content_path: str,
-    output_path: str,
-    original_cv_path: str | None = None,
-    vacancy_description: str | None = None,
-    verbose: bool = False,
-    output_format: str = "pdf",
-    cv_style: str = "executive",
-) -> str:
-    """
-    Generate document and summary from an existing .content file.
-
-    Args:
-        content_path: Path to the .content file with finalized CV text.
-        output_path: Path where the output document should be saved.
-        original_cv_path: Optional path to original CV PDF (for summary generation).
-        vacancy_description: Optional vacancy text (for summary generation).
-        verbose: If True, print progress updates.
-        output_format: Output format, either "pdf" or "docx".
-        cv_style: CV style, either "executive" or "normal".
-
-    Returns:
-        The path to the generated document.
-    """
-    initialize()
-
-    def log(message: str) -> None:
-        if verbose:
-            print(f"[CV Creator] {message}")
-
-    cv_content = Path(content_path).read_text()
-    if not cv_content.strip():
-        raise RuntimeError(f"Content file is empty: {content_path}")
-
-    # Compute cover letter output path
-    output = Path(output_path)
-    ext = output.suffix  # .pdf or .docx
-    cl_stem = output.stem.replace("optimized_cv", "cover_letter") if "optimized_cv" in output.stem else f"{output.stem}.cover_letter"
-    cl_output_path = str(output.parent / f"{cl_stem}{ext}")
-
-    log(f"Generating {output_format.upper()} from content file...")
-    log(f"  Content: {content_path}")
-    log(f"  Output: {output_path}")
-    log(f"  Cover letter: {cl_output_path}")
-
-    # Document generation (CV)
-    pdf_agent = get_document_generator_agent(output_format, cv_style)
-    await pdf_agent.run(
-        f"""Convert the following CV content into a professional document.
-
-CV CONTENT:
-{cv_content}
-
-OUTPUT PATH: {output_path}
-"""
-    )
-    log(f"  CV {output_format.upper()} generated.")
-
-    # Cover letter generation
-    if vacancy_description:
-        try:
-            cl_agent = get_cover_letter_writer_agent(cv_style)
-            current_date = date.today().strftime("%B %d, %Y")
-            cl_result = await cl_agent.run(
-                f"""Write a cover letter for this candidate.
-
-CURRENT DATE: {current_date}
-
-JOB VACANCY:
-{vacancy_description}
-
-CANDIDATE'S CV:
-{cv_content}
-"""
-            )
-            cover_letter_text = cl_result.text
-            Path(cl_output_path + ".content").write_text(cover_letter_text)
-
-            cl_doc_agent = get_document_generator_agent(output_format, cv_style)
-            await cl_doc_agent.run(
-                f"""Convert the following COVER LETTER (not a CV) into a professional document.
-
-This is a cover letter — format it as a simple business letter. Do NOT apply CV formatting
-(no role-header divs, no experience sections, no competencies sections).
-Use clean paragraph formatting with the header/contact info at the top, then flowing paragraphs.
-
-COVER LETTER CONTENT:
-{cover_letter_text}
-
-OUTPUT PATH: {cl_output_path}
-"""
-            )
-            log(f"  Cover letter {output_format.upper()} generated.")
-        except Exception as e:
-            log(f"  Cover letter generation failed: {e}")
-
-    # Summary generation (if original CV and vacancy are available)
-    if original_cv_path and vacancy_description:
-        from cv_creator.tools import read_pdf
-        original_cv = read_pdf(original_cv_path)
-
-        summarizer = get_summarizer_agent()
-        summary_result = await summarizer.run(
-            f"""Compare these two CV versions and summarize the changes made.
-
-TARGET JOB:
-{vacancy_description[:1000]}
-
-ORIGINAL CV:
-{original_cv}
-
-OPTIMIZED CV:
-{cv_content}
-
-Provide a clear summary of what was changed and why."""
-        )
-        summary_path = Path(output_path + ".summary.md")
-        summary_path.write_text(summary_result.text)
-        log(f"  Summary: {summary_path}")
-
-    log("Done.")
-    return output_path
-
-
 async def run_cv_optimization(
     vacancy_description: str,
     cv_pdf_path: str,
@@ -923,16 +797,3 @@ async def run_cv_optimization(
         raise RuntimeError(error_msg) from e
 
 
-def get_orchestrator_agent(cv_pdf_path: str, output_path: str) -> ChatAgent:
-    """
-    Get an orchestrator agent (for backward compatibility).
-
-    Note: The new implementation uses workflows, but this function
-    returns a simple agent wrapper for API compatibility.
-    """
-    # Parameters are kept for API compatibility but not used
-    _ = cv_pdf_path, output_path
-    return get_chat_client().create_agent(
-        name="CV Optimization Orchestrator",
-        instructions="This is a placeholder. Use run_cv_optimization() for the workflow-based implementation.",
-    )
