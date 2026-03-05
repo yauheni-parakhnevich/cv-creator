@@ -3,7 +3,7 @@
 import asyncio
 import logging
 import shutil
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from sqlalchemy import select, update
 
@@ -22,7 +22,7 @@ async def recover_stuck_tasks():
         stuck_tasks = result.scalars().all()
         for task in stuck_tasks:
             task.status = TaskStatus.pending
-            task.updated_at = datetime.now(timezone.utc)
+            task.updated_at = datetime.now(UTC)
             logger.info("Recovered stuck task %d, re-enqueuing", task.id)
         await session.commit()
 
@@ -46,7 +46,7 @@ async def process_task(task_id: int):
 
         # Mark as processing
         task.status = TaskStatus.processing
-        task.updated_at = datetime.now(timezone.utc)
+        task.updated_at = datetime.now(UTC)
         await session.commit()
 
     try:
@@ -67,7 +67,7 @@ async def process_task(task_id: int):
                 await session.execute(
                     update(Task)
                     .where(Task.id == task_id)
-                    .values(company_name=company_name, updated_at=datetime.now(timezone.utc))
+                    .values(company_name=company_name, updated_at=datetime.now(UTC))
                 )
                 await session.commit()
             logger.info("Task %d: extracted company name '%s'", task_id, company_name)
@@ -113,7 +113,7 @@ async def process_task(task_id: int):
                     status=TaskStatus.completed,
                     output_filename=output_path.name,
                     cover_letter_filename=cover_letter_filename,
-                    updated_at=datetime.now(timezone.utc),
+                    updated_at=datetime.now(UTC),
                 )
             )
             await session.commit()
@@ -129,7 +129,7 @@ async def process_task(task_id: int):
                 .values(
                     status=TaskStatus.failed,
                     error_message=str(e),
-                    updated_at=datetime.now(timezone.utc),
+                    updated_at=datetime.now(UTC),
                 )
             )
             await session.commit()
