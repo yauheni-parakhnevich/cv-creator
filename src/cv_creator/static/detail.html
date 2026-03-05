@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Task Detail - CV Creator</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>CV Creator</h1>
+            <a href="/" class="back-link">&larr; Back to tasks</a>
+        </header>
+
+        <section class="detail-section" id="task-detail">
+            <div class="detail-header">
+                <h2>Task #<span id="task-id"></span></h2>
+                <span id="task-status" class="badge"></span>
+            </div>
+
+            <div class="detail-grid">
+                <div class="detail-item">
+                    <label>Company</label>
+                    <span id="task-company"></span>
+                </div>
+                <div class="detail-item">
+                    <label>CV File</label>
+                    <span id="task-cv-filename"></span>
+                </div>
+                <div class="detail-item">
+                    <label>Output Format</label>
+                    <span id="task-format"></span>
+                </div>
+                <div class="detail-item">
+                    <label>CV Style</label>
+                    <span id="task-style"></span>
+                </div>
+                <div class="detail-item">
+                    <label>Created</label>
+                    <span id="task-created"></span>
+                </div>
+                <div class="detail-item">
+                    <label>Updated</label>
+                    <span id="task-updated"></span>
+                </div>
+            </div>
+
+            <div class="detail-block">
+                <label>Vacancy Description</label>
+                <pre id="task-vacancy"></pre>
+            </div>
+
+            <div class="detail-block" id="background-block" style="display:none">
+                <label>Background Info</label>
+                <pre id="task-background"></pre>
+            </div>
+
+            <div class="detail-block" id="summary-block" style="display:none">
+                <label>Changes Summary</label>
+                <div id="task-summary" class="summary-content"></div>
+            </div>
+
+            <div class="detail-block" id="error-block" style="display:none">
+                <label>Error</label>
+                <pre id="task-error" class="error-text"></pre>
+            </div>
+
+            <div class="detail-actions">
+                <a id="download-btn" href="#" class="btn btn-download" style="display:none">Download CV</a>
+                <a id="download-cover-letter-btn" href="#" class="btn btn-download" style="display:none">Download Cover Letter</a>
+                <button id="delete-btn" class="btn btn-delete">Delete Task</button>
+            </div>
+        </section>
+    </div>
+
+    <script src="/static/detail.js"></script>
+</body>
+</html>

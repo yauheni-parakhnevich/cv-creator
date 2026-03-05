@@ -34,85 +34,106 @@ def get_cv_template() -> str:
 </html>"""
 
 
-def _build_instructions(fmt: str) -> str:
-    """Build agent instructions for the given output format."""
-    template = get_cv_template()
-    fmt_upper = fmt.upper()
-    tool_name = f"generate_{fmt}"
-
-    return f"""You are an executive CV formatting specialist. Your task is to convert CV content into an elegant, Director/C-level professional HTML format and generate a {fmt_upper} document.
-
-You will receive:
-1. The finalized CV content
-2. The output file path for the {fmt_upper}
-
-IMPORTANT: Create an EXECUTIVE-LEVEL layout suitable for Director, VP, or C-suite positions.
-IMPORTANT: Do not do any of text adjustements or optimizations - the content is already optimized. Your task is purely to format it into a polished {fmt_upper}.
-
-Steps:
-1. Convert the CV content into polished, executive-style HTML
-2. Use the following HTML template, replacing {{{{CV_CONTENT}}}} with the formatted CV:
-
-{template}
-
-3. Structure the CV HTML with these EXACT sections in order:
+_EXECUTIVE_SECTIONS = """3. Structure the CV HTML with these EXACT sections in order:
    - <h1> for the candidate's name (will render in uppercase, elegant serif font)
    - <p class="contact"> for contact information (email • phone • location • LinkedIn)
    - <h2>Profile</h2> - executive summary emphasizing strategic leadership and impact
    - <h2>Experience</h2> - career history focusing on leadership scope and business outcomes
    - <h2>Selected Competencies</h2> - core competencies and expertise areas
    - <h2>Leadership and Awards</h2> - board positions, executive roles, recognitions
-   - <h2>Education and Professional Qualifications</h2> - degrees, executive education, certifications
+   - <h2>Education and Professional Qualifications</h2> - degrees, executive education, certifications"""
 
-4. EXECUTIVE FORMATTING RULES:
-   - Use <strong> for job titles (e.g., <strong>Chief Technology Officer</strong>)
-   - Format each role as: <strong>Title</strong> | Company Name | Dates
+_NORMAL_SECTIONS = """3. Structure the CV HTML with these EXACT sections in order:
+   - <h1> for the candidate's name (will render in uppercase, elegant serif font)
+   - <p class="contact"> for contact information (email • phone • location • LinkedIn)
+   - <h2>Profile</h2> - professional summary highlighting skills and experience
+   - <h2>Experience</h2> - career history focusing on responsibilities and achievements
+   - <h2>Key Skills</h2> - technical and professional skills
+   - <h2>Education</h2> - degrees, certifications, and training"""
+
+
+def _build_instructions(fmt: str, style: str = "executive") -> str:
+    """Build agent instructions for the given output format and style."""
+    template = get_cv_template()
+    fmt_upper = fmt.upper()
+    tool_name = f"generate_{fmt}"
+
+    if style == "executive":
+        level_desc = "an executive CV formatting specialist"
+        layout_desc = "an EXECUTIVE-LEVEL layout suitable for Director, VP, or C-suite positions"
+        sections = _EXECUTIVE_SECTIONS
+        closing = "The output should look polished, sophisticated, and appropriate for senior executive roles."
+    else:
+        level_desc = "a professional CV formatting specialist"
+        layout_desc = "a professional layout suitable for mid-to-senior level positions"
+        sections = _NORMAL_SECTIONS
+        closing = "The output should look clean, professional, and well-structured."
+
+    return f"""You are {level_desc}. Your task is to convert CV content into an elegant, professional HTML format and generate a {fmt_upper} document.
+
+You will receive:
+1. The finalized CV content
+2. The output file path for the {fmt_upper}
+
+IMPORTANT: Create {layout_desc}.
+IMPORTANT: Do not do any of text adjustements or optimizations - the content is already optimized. Your task is purely to format it into a polished {fmt_upper}.
+
+Steps:
+1. Convert the CV content into polished, professional HTML
+2. Use the following HTML template, replacing {{{{CV_CONTENT}}}} with the formatted CV:
+
+{template}
+
+{sections}
+
+4. FORMATTING RULES:
+   - Format each experience role using this EXACT HTML structure:
+     <div class="role-header">
+       <span class="role-title">Job Title</span>
+       <span class="role-date">Start Date – End Date</span>
+     </div>
+     <p class="company">Company Name</p>
+     Then follow with a <ul> of achievements/responsibilities.
+   - Do NOT use plain text pipes (|) to separate title, company, and dates. Always use the HTML structure above.
    - Bullet points should emphasize: scope, scale, outcomes, and business impact
    - Use metrics and achievements (revenue, team size, % improvements)
-   - Competencies should be grouped by category (e.g., Strategic Leadership, Technology, Operations)
    - Keep language authoritative and results-focused
    - Avoid jargon; use clear business language
    - Do not allow experience to be partially on one page and partially on another - keep each role together
 
 5. Use the {tool_name} tool to create the final {fmt_upper}
 
-The output should look polished, sophisticated, and appropriate for senior executive roles."""
+{closing}"""
 
 
-def _create_generator_agent(fmt: str) -> ChatAgent:
-    """Create a document generator agent for the given format (pdf or docx)."""
+def _create_generator_agent(fmt: str, style: str = "executive") -> ChatAgent:
+    """Create a document generator agent for the given format and style."""
     tool = generate_docx if fmt == "docx" else generate_pdf
     name = f"{fmt.upper()} Generator"
     return get_chat_client().create_agent(
         name=name,
-        instructions=_build_instructions(fmt),
+        instructions=_build_instructions(fmt, style),
         tools=[tool],
     )
 
 
-# Lazy-loaded singletons
-_agent: ChatAgent | None = None
-_docx_agent: ChatAgent | None = None
+# Lazy-loaded cache keyed by (fmt, style)
+_agents: dict[tuple[str, str], ChatAgent] = {}
 
 
-def get_pdf_generator_agent() -> ChatAgent:
+def get_document_generator_agent(fmt: str = "pdf", style: str = "executive") -> ChatAgent:
+    """Get the document generator agent for the given format and style."""
+    key = (fmt, style)
+    if key not in _agents:
+        _agents[key] = _create_generator_agent(fmt, style)
+    return _agents[key]
+
+
+def get_pdf_generator_agent(style: str = "executive") -> ChatAgent:
     """Get the PDF generator agent (lazy loaded)."""
-    global _agent
-    if _agent is None:
-        _agent = _create_generator_agent("pdf")
-    return _agent
+    return get_document_generator_agent("pdf", style)
 
 
-def get_docx_generator_agent() -> ChatAgent:
+def get_docx_generator_agent(style: str = "executive") -> ChatAgent:
     """Get the DOCX generator agent (lazy loaded)."""
-    global _docx_agent
-    if _docx_agent is None:
-        _docx_agent = _create_generator_agent("docx")
-    return _docx_agent
-
-
-def get_document_generator_agent(fmt: str = "pdf") -> ChatAgent:
-    """Get the document generator agent for the given format."""
-    if fmt == "docx":
-        return get_docx_generator_agent()
-    return get_pdf_generator_agent()
+    return get_document_generator_agent("docx", style)

@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CV Creator</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>CV Creator</h1>
+            <p>Optimize your CV for specific job opportunities using AI</p>
+        </header>
+
+        <details class="form-section">
+            <summary><h2>New Task</h2></summary>
+            <form id="task-form">
+                <div class="form-group">
+                    <label for="cv_file">CV File (PDF)</label>
+                    <input type="file" id="cv_file" name="cv_file" accept=".pdf" required>
+                </div>
+                <div class="form-group">
+                    <label for="vacancy_text">Vacancy Description</label>
+                    <textarea id="vacancy_text" name="vacancy_text" rows="6" required
+                              placeholder="Paste the job description here..."></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="background_text">Background Info (optional)</label>
+                    <textarea id="background_text" name="background_text" rows="4"
+                              placeholder="Additional context about your experience..."></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="output_format">Output Format</label>
+                    <select id="output_format" name="output_format">
+                        <option value="docx">DOCX</option>
+                        <option value="pdf">PDF</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="cv_style">CV Style</label>
+                    <select id="cv_style" name="cv_style">
+                        <option value="executive">Executive</option>
+                        <option value="normal">Normal</option>
+                    </select>
+                </div>
+                <button type="submit" id="submit-btn">Create Task</button>
+            </form>
+        </details>
+
+        <section class="tasks-section">
+            <h2>Tasks</h2>
+            <div id="tasks-empty" class="empty-state">No tasks yet. Create one above.</div>
+            <table id="tasks-table" class="hidden">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Company</th>
+                        <th>CV File</th>
+                        <th>Format</th>
+                        <th>Status</th>
+                        <th>Created</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="tasks-body"></tbody>
+            </table>
+        </section>
+    </div>
+
+    <script src="/static/app.js"></script>
+</body>
+</html>

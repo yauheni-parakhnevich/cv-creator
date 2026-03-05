@@ -1,0 +1,10 @@
+.git
+__pycache__
+*.pyc
+.env
+.venv
+.ruff_cache
+.pytest_cache
+data/
+*.egg-info
+.claude

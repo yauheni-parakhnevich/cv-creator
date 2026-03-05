@@ -7,7 +7,7 @@ from agent_framework import ai_function
 from bs4 import BeautifulSoup, NavigableString, Tag
 from docx import Document
 from docx.enum.table import WD_TABLE_ALIGNMENT
-from docx.enum.text import WD_ALIGN_PARAGRAPH
+from docx.enum.text import WD_ALIGN_PARAGRAPH, WD_TAB_ALIGNMENT
 from docx.oxml import OxmlElement
 from docx.oxml.ns import qn
 from docx.shared import Cm, Emu, Pt, RGBColor
@@ -214,7 +214,7 @@ def _process_element(document, element):
             )
             p.paragraph_format.space_after = Pt(15)
         elif _is_profile(element):
-            p.alignment = WD_ALIGN_PARAGRAPH.JUSTIFY
+            p.alignment = WD_ALIGN_PARAGRAPH.LEFT
             _add_inline_runs(p, element, italic=True, color=COLOR_DARK_BLUE)
             p.paragraph_format.space_after = Pt(12)
             p.paragraph_format.line_spacing = Pt(15)
@@ -225,7 +225,7 @@ def _process_element(document, element):
             _add_inline_runs(p, element, color=COLOR_BODY)
             p.paragraph_format.space_after = Pt(3)
         else:
-            p.alignment = WD_ALIGN_PARAGRAPH.JUSTIFY
+            p.alignment = WD_ALIGN_PARAGRAPH.LEFT
             _add_inline_runs(p, element, color=COLOR_BODY)
             p.paragraph_format.space_after = Pt(6)
 
@@ -265,8 +265,33 @@ def _process_element(document, element):
         p.paragraph_format.space_after = Pt(10)
 
     elif tag_name == "div":
-        for child in element.children:
-            _process_element(document, child)
+        classes = _get_element_classes(element)
+        if "role-header" in classes:
+            # Render role-header as a single paragraph with title left-aligned and date right-aligned
+            p = document.add_paragraph()
+            p.paragraph_format.space_after = Pt(3)
+            # Use a right-aligned tab stop at the right margin
+            section = document.sections[-1]
+            tab_pos = section.page_width - section.left_margin - section.right_margin
+            tab_stops = p.paragraph_format.tab_stops
+            tab_stops.add_tab_stop(tab_pos, WD_TAB_ALIGNMENT.RIGHT)
+            title_span = element.find(class_="role-title")
+            date_span = element.find(class_="role-date")
+            if title_span:
+                run = p.add_run(title_span.get_text())
+                run.bold = True
+                run.font.color.rgb = COLOR_DARK_NAVY
+                run.font.name = "Georgia"
+                run.font.size = Pt(10)
+            if date_span:
+                run = p.add_run("\t")
+                run = p.add_run(date_span.get_text())
+                run.font.color.rgb = COLOR_MUTED_BLUE
+                run.font.name = "Arial"
+                run.font.size = Pt(9)
+        else:
+            for child in element.children:
+                _process_element(document, child)
 
     elif tag_name in ("html", "body", "head", "style", "meta", "title", "link", "script"):
         if tag_name in ("html", "body"):

@@ -1,0 +1,13 @@
+services:
+  cv-creator-web:
+    image: cv-creator-web:latest
+    ports:
+      - "8952:8000"
+    volumes:
+      - cv-data:/data
+    env_file:
+      - .env
+    restart: unless-stopped
+
+volumes:
+  cv-data:

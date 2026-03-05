@@ -1,6 +1,7 @@
 """CV Creator agents module."""
 
 from .company_extractor import get_company_extractor_agent
+from .cover_letter_writer import get_cover_letter_writer_agent
 from .cv_reader import get_cv_reader_agent
 from .cv_writer import get_cv_writer_agent
 from .orchestrator import get_orchestrator_agent, run_cv_optimization, run_from_content
@@ -11,6 +12,7 @@ from .validator import get_validator_agent
 
 __all__ = [
     "get_company_extractor_agent",
+    "get_cover_letter_writer_agent",
     "get_researcher_agent",
     "get_cv_reader_agent",
     "get_cv_writer_agent",

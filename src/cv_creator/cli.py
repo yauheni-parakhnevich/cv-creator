@@ -55,8 +55,16 @@ from cv_creator.agents import run_cv_optimization, run_from_content
     "-f",
     "output_format",
     type=click.Choice(["pdf", "docx"], case_sensitive=False),
-    default="pdf",
-    help="Output document format (default: pdf).",
+    default="docx",
+    help="Output document format (default: docx).",
+)
+@click.option(
+    "--style",
+    "-s",
+    "cv_style",
+    type=click.Choice(["executive", "normal"], case_sensitive=False),
+    default="executive",
+    help="CV style: executive (C-level) or normal (mid-level professional). Default: executive.",
 )
 def main(
     vacancy: str | None,
@@ -66,6 +74,7 @@ def main(
     background: Path | None,
     from_content: Path | None,
     output_format: str,
+    cv_style: str,
 ) -> None:
     """
     CV Creator - Optimize your CV for specific job opportunities.
@@ -107,6 +116,7 @@ def main(
                     vacancy_description=vacancy_description,
                     verbose=verbose,
                     output_format=output_format,
+                    cv_style=cv_style,
                 )
             )
             click.echo()
@@ -138,8 +148,8 @@ def main(
             click.echo("Using vacancy text provided directly")
 
     # Validate CV file
-    if not cv.suffix.lower() == ".pdf":
-        click.echo("Error: CV file must be a PDF.", err=True)
+    if cv.suffix.lower() not in (".pdf", ".md"):
+        click.echo("Error: CV file must be a PDF or Markdown (.md).", err=True)
         sys.exit(1)
 
     # Read background info if provided
@@ -165,6 +175,7 @@ def main(
                 background=background_text,
                 verbose=verbose,
                 output_format=output_format,
+                cv_style=cv_style,
             )
         )
         click.echo()
